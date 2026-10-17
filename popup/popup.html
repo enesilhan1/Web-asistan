@@ -2,9 +2,103 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Web Asistanı</title>
+  <link rel="stylesheet" href="popup.css">
+  <script type="module" src="popup.js"></script>
 </head>
 <body>
-  <p>Web Asistanı (yapım aşamasında)</p>
+  <!-- Sohbet -->
+  <section id="sohbet-gorunumu" class="gorunum">
+    <header class="ust">
+      <button id="sohbetler-dugmesi" class="simge" data-baslik="ui.sohbetler" aria-label="">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      </button>
+      <div class="ust-orta">
+        <div id="sohbet-basligi" class="ust-baslik"></div>
+        <div id="sohbet-alt-bilgi" class="ust-alt"></div>
+      </div>
+      <button id="yeni-sohbet-dugmesi" class="simge" data-baslik="ui.yeniSohbet" aria-label="">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button id="ayarlar-dugmesi" class="simge" data-baslik="ui.ayarlar" aria-label="">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </header>
+
+    <main id="mesajlar" class="mesajlar" aria-live="polite"></main>
+
+    <form id="yazma-alani" class="yazma">
+      <textarea id="mesaj-kutusu" rows="1" data-yer="ui.mesajYaz"></textarea>
+      <button id="gonder-dugmesi" type="submit" class="gonder" data-baslik="ui.gonder" aria-label="">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <button id="durdur-dugmesi" type="button" class="gonder durdur" data-baslik="ui.durdur" aria-label="" hidden>
+        <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <!-- Sohbet listesi -->
+  <section id="liste-gorunumu" class="gorunum" hidden>
+    <header class="ust">
+      <button class="simge geri-dugmesi" data-baslik="ui.geri" aria-label="">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="ust-orta"><div class="ust-baslik" data-metin="ui.sohbetler"></div></div>
+      <button id="listeden-yeni-dugmesi" class="simge" data-baslik="ui.yeniSohbet" aria-label="">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </header>
+    <main id="sohbet-listesi" class="liste"></main>
+  </section>
+
+  <!-- Ayarlar -->
+  <section id="ayarlar-gorunumu" class="gorunum" hidden>
+    <header class="ust">
+      <button class="simge geri-dugmesi" data-baslik="ui.geri" aria-label="">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="ust-orta"><div class="ust-baslik" data-metin="ui.ayarlar"></div></div>
+    </header>
+    <form id="ayarlar-formu" class="ayarlar">
+      <label class="alan">
+        <span data-metin="ui.dil"></span>
+        <select id="dil-secimi">
+          <option value="tr">Türkçe</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+
+      <label class="alan">
+        <span data-metin="ui.saglayici"></span>
+        <select id="saglayici-secimi"></select>
+      </label>
+
+      <label class="alan">
+        <span data-metin="ui.model"></span>
+        <select id="model-secimi"></select>
+        <input id="elle-model" type="text" spellcheck="false" autocomplete="off" hidden>
+        <small id="model-aciklamasi" class="ipucu"></small>
+      </label>
+
+      <label class="alan">
+        <span data-metin="ui.anahtar"></span>
+        <div class="anahtar-satiri">
+          <input id="anahtar-kutusu" type="password" spellcheck="false" autocomplete="off">
+          <button id="anahtar-goster" type="button" class="ikincil"></button>
+        </div>
+        <small id="anahtar-uyarisi" class="ipucu uyari" hidden></small>
+        <a id="anahtar-sayfasi" class="ipucu" target="_blank" rel="noopener noreferrer"></a>
+      </label>
+
+      <div class="kaydet-satiri">
+        <button type="submit" class="birincil" data-metin="ui.kaydet"></button>
+        <span id="kayit-durumu" class="ipucu" role="status"></span>
+      </div>
+
+      <p class="gizlilik" data-metin="ui.gizlilik"></p>
+    </form>
+  </section>
 </body>
 </html>

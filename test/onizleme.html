@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Web Asistanı önizleme</title>
+  <!--
+    Popup'ı eklenti olarak yüklemeden tarayıcıda denemek için. Sahte chrome
+    API'si kurar, arka plan döngüsünü (gerçek Asistan sınıfı) sahte bir Claude
+    yanıtıyla çalıştırır. Proje kökünden bir HTTP sunucusuyla açılmalı:
+      python -m http.server 8123   →   http://localhost:8123/test/onizleme.html
+    ?anahtar=0 → API anahtarı girilmemiş hali, ?hata=1 → API hatası.
+  -->
+  <style>
+    html { background: #888; }
+    body { margin: 20px auto !important; box-shadow: 0 6px 30px rgba(0,0,0,.35); }
+  </style>
+</head>
+<body>
+<script type="module">
+  import { Asistan } from '../src/asistan.js';
+  import { Depo } from '../src/depo.js';
+
+  const parametre = new URLSearchParams(location.search);
+
+  // --- chrome.storage.local (değişiklik olaylarıyla)
+  const veri = {};
+  const dinleyiciler = [];
+  const kopya = (v) => (v === undefined ? undefined : structuredClone(v));
+  const alan = {
+    get: async (k) => (k in veri ? { [k]: kopya(veri[k]) } : {}),
+    set: async (o) => {
+      const d = {};
+      for (const [k, v] of Object.entries(o)) {
+        d[k] = { oldValue: kopya(veri[k]), newValue: kopya(v) };
+        veri[k] = kopya(v);
+      }
+      setTimeout(() => dinleyiciler.forEach((f) => f(d, 'local')));
+    },
+    remove: async (k) => {
+      const d = { [k]: { oldValue: kopya(veri[k]) } };
+      delete veri[k];
+      setTimeout(() => dinleyiciler.forEach((f) => f(d, 'local')));
+    },
+  };
+
+  // --- sahte sekmeler, geçmiş ve Claude
+  const sekmeler = [
+    { id: 11, windowId: 1, active: true, title: 'Yapay zekâ haberleri — Örnek Haber', url: 'https://haber.example/yz' },
+    { id: 12, windowId: 1, active: false, title: 'GitHub', url: 'https://github.com/' },
+  ];
+  const tarayici = {
+    tabs: {
+      query: async (q) => (q.active ? [sekmeler[0]] : sekmeler),
+      get: async (id) => sekmeler.find((s) => s.id === id),
+    },
+    windows: { getLastFocused: async () => ({ id: 1 }) },
+    scripting: {
+      executeScript: async () => [{ result: { baslik: sekmeler[0].title, url: sekmeler[0].url, dil: 'tr', aciklama: '', secim: '', metin: 'Yeni model duyuruldu. Fiyatlar düştü.' } }],
+    },
+    history: { search: async () => [] },
+  };
+  let tur = 0;
+  const sahteFetch = async (_adres, secenek) => {
+    // Gerçek fetch gibi durdurulunca hemen iptal olur.
+    await new Promise((coz, reddet) => {
+      const z = setTimeout(coz, Number(parametre.get('gecikme') ?? 900));
+      secenek.signal?.addEventListener('abort', () => {
+        clearTimeout(z);
+        reddet(new DOMException('aborted', 'AbortError'));
+      });
+    });
+    const govde = JSON.parse(secenek.body);
+    if (parametre.get('hata') === '1') {
+      return new Response(JSON.stringify({ error: { message: 'invalid x-api-key' } }), { status: 401 });
+    }
+    const sonMesaj = govde.messages.at(-1);
+    const aracSonucu = Array.isArray(sonMesaj.content) && sonMesaj.content[0]?.type === 'tool_result';
+    tur++;
+    const icerik = aracSonucu
+      ? [{ type: 'text', text: '## Özet\nSayfada iki ana nokta var:\n- **Yeni model** duyuruldu\n- Fiyatlar `düştü`\n\nKaynak: *Örnek Haber* sekmesi.' }]
+      : [{ type: 'tool_use', id: `t${tur}`, name: 'sekmeyi_oku', input: { sekme_id: 11 } }];
+    return new Response(JSON.stringify({
+      content: icerik,
+      stop_reason: aracSonucu ? 'end_turn' : 'tool_use',
+      usage: { input_tokens: 1800, output_tokens: 120 },
+    }), { status: 200 });
+  };
+
+  const depo = new Depo(alan);
+  if (parametre.get('anahtar') !== '0') {
+    await depo.ayarlariGuncelle((a) => ({ ...a, anahtarlar: { anthropic: 'sk-ant-onizleme' } }));
+  }
+  const asistan = new Asistan({ depo, tarayici, fetch: sahteFetch, tekrarBeklemesiMs: 1 });
+
+  window.chrome = {
+    storage: { local: alan, onChanged: { addListener: (f) => dinleyiciler.push(f) } },
+    runtime: {
+      id: 'onizleme',
+      sendMessage: async (m) => {
+        if (m.tur === 'gonder') {
+          try {
+            const { sohbetId } = await asistan.gonder(m.sohbetId ?? null, m.metin);
+            return { sohbetId };
+          } catch (e) {
+            return { hata: e.message };
+          }
+        }
+        if (m.tur === 'durdur') asistan.durdur(m.sohbetId);
+        return {};
+      },
+    },
+  };
+
+  // popup.html'in gövdesini ve stilini bu sayfaya al, sonra popup.js'i yükle.
+  const html = await (await fetch('../popup/popup.html')).text();
+  const belge = new DOMParser().parseFromString(html, 'text/html');
+  const stil = document.createElement('link');
+  stil.rel = 'stylesheet';
+  stil.href = '../popup/popup.css';
+  document.head.append(stil);
+  document.body.innerHTML = belge.body.innerHTML;
+  await new Promise((r) => (stil.onload = r));
+  await import('../popup/popup.js');
+</script>
+</body>
+</html>
