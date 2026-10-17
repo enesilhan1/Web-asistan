@@ -23,12 +23,13 @@ TakvimTakip uygulamasındaki yapının aynısı:
 - Asistan **tüm açık sekmelerin** içeriğini (görünen metin) okuyabilir.
 - **Sadece okuma/inceleme**: tıklama, form doldurma, gezinme, sekme
   açma/kapama/yenileme yok.
-- Chrome'un izin vermediği sayfalar (`chrome://`, Chrome Web Mağazası,
-  yerleşik PDF görüntüleyici vb.) ve uykudaki sekmeler okunamaz; asistan bunu
-  söyler.
+- Tarayıcının izin vermediği sayfalar (Chrome: `chrome://`, Chrome Web
+  Mağazası; Firefox: `about:`, addons.mozilla.org ve bazı Mozilla sayfaları;
+  ikisinde de yerleşik PDF görüntüleyici vb.) ve uykudaki sekmeler okunamaz;
+  asistan bunu söyler.
 
 ## 4. Geçmiş
-- Chrome'un tuttuğu **tüm geçmiş** aranabilir (zaman sınırı yok).
+- Tarayıcının tuttuğu **tüm geçmiş** aranabilir (zaman sınırı yok).
 - Modele yalnızca **alan adı + sayfa başlığı** gider. Tam adres, ziyaret
   tarihi, ziyaret sayısı **gitmez**.
 
@@ -53,7 +54,7 @@ açıkça söyler.
   dilde yanıt verir.
 
 ## 7. Sohbet geçmişi
-- Sohbetler **yalnızca bilgisayarda** (`chrome.storage.local`) saklanır.
+- Sohbetler **yalnızca bilgisayarda** (`storage.local`) saklanır.
 - Birden çok sohbet: yeni sohbet açılabilir, eskiler listeden açılıp devam
   edilebilir veya silinebilir.
 - Her sohbet başladığı sağlayıcı/modele bağlıdır (sağlayıcıların geçmiş
