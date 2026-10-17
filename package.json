@@ -1,0 +1,9 @@
+{
+  "name": "web-asistani",
+  "private": true,
+  "type": "module",
+  "description": "Web Asistanı Chrome eklentisi (derleme adımı yok; testler için Node 20+)",
+  "scripts": {
+    "test": "node --test test/"
+  }
+}
