@@ -1,7 +1,9 @@
 # Web Asistanı
 
 Açık sekmelerini inceleyen ve geçmişte girdiğin siteleri **yalnızca alan adı ve
-sayfa başlığıyla** bilen bir yapay zekâ asistanı (Chrome eklentisi).
+sayfa başlığıyla** bilen bir yapay zekâ asistanı. **Chrome** (ve Edge, Brave,
+Opera, Vivaldi gibi Chromium tabanlı tarayıcılar) ile **Firefox**'ta aynı kodla
+çalışan bir tarayıcı eklentisi.
 
 - **Açık sekmeler:** bütün açık sekmelerin metnini okuyabilir; özetler,
   karşılaştırır, sorularını yanıtlar. **Sadece okur**: tıklamaz, form
@@ -20,19 +22,58 @@ Kararlaştırılan özelliklerin tamamı: [docs/SPEC.md](docs/SPEC.md).
 
 ## Kurulum
 
-1. Bu depoyu indir: GitHub'da **Code → Download ZIP**, sonra ZIP'i bir klasöre
-   çıkar. Ya da `git clone https://github.com/enesilhan1/Web-asistan.git`.
-2. Chrome'da adres çubuğuna `chrome://extensions` yaz.
-3. Sağ üstteki **Geliştirici modu**nu aç.
-4. **Paketlenmemiş öğe yükle**'ye tıkla ve çıkardığın klasörü seç (içinde
-   `manifest.json` olan klasör).
-5. Araç çubuğundaki yapboz simgesinden **Web Asistanı**'nı sabitle.
+Önce eklenti klasörünü edin: GitHub'da **Code → Download ZIP** ile indirip bir
+klasöre çıkar ya da `git clone https://github.com/enesilhan1/Web-asistan.git`.
+(İçinde `manifest.json` olan klasör, eklentinin kendisidir.)
 
-Chrome yükleme sırasında şu izinleri ister:
+### Chrome (ve Edge, Brave, Opera, Vivaldi)
+
+1. Adres çubuğuna `chrome://extensions` yaz (Edge'de `edge://extensions`,
+   Brave'de `brave://extensions`).
+2. **Geliştirici modu**nu aç.
+3. **Paketlenmemiş öğe yükle**'ye tıkla ve eklenti klasörünü seç.
+4. Araç çubuğundaki yapboz simgesinden **Web Asistanı**'nı sabitle.
+
+Klasörde değişiklik olursa aynı sayfada eklentinin ↻ (yenile) düğmesine bas.
+
+### Firefox (140 ve üstü)
+
+**Hızlı deneme (geçici):**
+
+1. Adres çubuğuna `about:debugging#/runtime/this-firefox` yaz.
+2. **Geçici Eklenti Yükle…**'ye tıkla ve klasördeki `manifest.json` dosyasını
+   seç.
+
+Geçici eklenti Firefox kapanınca kaldırılır; her açılışta yeniden yüklemen
+gerekir.
+
+**Kalıcı kurulum:** Firefox, kalıcı eklentilerin Mozilla tarafından
+imzalanmasını ister. Mağazada yayımlamadan, ücretsiz imzalatabilirsin:
+
+1. Proje klasöründe `npm run paketle` çalıştır, `dist/web-asistani-<sürüm>.zip`
+   oluşur.
+2. [addons.mozilla.org/developers](https://addons.mozilla.org/developers/)
+   adresinde Firefox hesabınla giriş yap → **Submit a New Add-on** →
+   **On your own** (kendi başına dağıtım) seç → ZIP'i yükle.
+3. İmzalanan `.xpi` dosyasını indir ve Firefox'a sürükle-bırak yap.
+
+Firefox kurulumda eklentinin **sayfa içeriği ve gezinme bilgisi** gönderdiğini
+gösterir: asistan, sorduğunda sayfa metnini ve geçmişteki alan adı + başlıkları
+senin seçtiğin yapay zekâya gönderir.
+
+### Site erişim izni
+
+Eklenti sekmeleri okuyabilmek için tüm sitelere erişim izni ister. Firefox bu
+izni kapatmana izin verir; Chrome'da da eklenti ayrıntılarından
+kısıtlanabilir. İzin kapalıysa popup'ın üstünde **İzin ver** düğmesi çıkar.
+(Firefox izin penceresini açarken popup'ı kapatabilir; izin yine de verilir,
+popup'ı yeniden aç.)
+
+Yükleme sırasında istenen izinler:
 
 | İzin | Neden |
 | --- | --- |
-| Tüm sitelerdeki verileri okuma | Açık sekmelerin metnini okumak için (sadece sen sorduğunda, sadece okuma) |
+| Tüm sitelerdeki verileri okuma | Açık sekmelerin metnini okumak ve yapay zekâ sağlayıcısına bağlanmak için (sadece sen sorduğunda, sadece okuma) |
 | Tarama geçmişini okuma | Geçmişte arama için (modele yalnızca alan adı + başlık gider) |
 | Sekmeler | Açık sekmeleri listelemek için |
 | Depolama | Ayarları ve sohbetleri bu bilgisayarda saklamak için |
@@ -66,16 +107,22 @@ Eklenti simgesine tıkla → ⚙ **Ayarlar** → sağlayıcıyı seç → anahta
 
 ### Okunamayan sayfalar
 
-Chrome, eklentilerin şu sayfaları okumasına izin vermez: `chrome://`
-sayfaları, Chrome Web Mağazası, yerleşik PDF görüntüleyici. Chrome'un bellek
-tasarrufu için uyuttuğu sekmeler de okunamaz; sekmeye bir kez tıklaman yeter.
-Yerel dosyaları (`file://`) okutmak istersen `chrome://extensions` →
-Web Asistanı → **Ayrıntılar** → **Dosya URL'lerine erişime izin ver**'i aç.
+Tarayıcılar eklentilerin bazı sayfaları okumasına izin vermez:
+
+- **Chrome:** `chrome://` sayfaları, Chrome Web Mağazası, yerleşik PDF
+  görüntüleyici.
+- **Firefox:** `about:` sayfaları, addons.mozilla.org ve bazı Mozilla
+  sayfaları, okuyucu görünümü, PDF görüntüleyici.
+
+Tarayıcının bellek tasarrufu için uyuttuğu sekmeler de okunamaz; sekmeye bir
+kez tıklaman yeter. Chrome'da yerel dosyaları (`file://`) okutmak istersen
+`chrome://extensions` → Web Asistanı → **Ayrıntılar** → **Dosya URL'lerine
+erişime izin ver**'i aç.
 
 ## Gizlilik
 
 - API anahtarların ve sohbetlerin yalnızca bu bilgisayarda
-  (`chrome.storage.local`) durur; şifrelenmeden saklanır, bilgisayarı
+  (`storage.local`) durur; şifrelenmeden saklanır, bilgisayarı
   paylaşıyorsan dikkat et.
 - Asistan bir sayfayı okuduğunda ya da geçmişte aradığında, sonuç **yalnızca
   seçtiğin sağlayıcıya** gönderilir. Başka hiçbir sunucuya veri gitmez.
@@ -86,11 +133,14 @@ Web Asistanı → **Ayrıntılar** → **Dosya URL'lerine erişime izin ver**'i 
 
 ## Geliştirme
 
-Derleme adımı yok; düz JavaScript (ES modülleri, Manifest V3).
+Derleme adımı yok; düz JavaScript (ES modülleri, Manifest V3). Aynı klasör
+Chrome'da service worker, Firefox'ta arka plan betiği olarak yüklenir
+(`manifest.json` → `background`); tarayıcı API'si `src/tarayici.js`'ten gelir.
 
 ```
 src/
-  arka_plan.js       service worker: popup'tan gelen gönder/durdur
+  arka_plan.js       arka plan: popup'tan gelen gönder/durdur
+  tarayici.js        Chrome/Firefox ortak API, site erişim izni
   asistan.js         sohbet döngüsü (model ↔ araçlar), kayıt
   araclar/araclar.js sekmeleri_listele, sekmeyi_oku, gecmiste_ara
   yz/                sağlayıcı istemcileri (anthropic, openai, gemini, deepseek)
@@ -113,7 +163,14 @@ python -m http.server 8123
 ```
 
 Sonra `http://localhost:8123/test/onizleme.html` adresini aç
-(`?anahtar=0` anahtarsız hal, `?hata=1` API hatası).
+(`?anahtar=0` anahtarsız hal, `?hata=1` API hatası, `?izin=0` site izni
+verilmemiş hal).
+
+Mağaza / Firefox imzalama paketi:
+
+```bash
+npm run paketle
+```
 
 ## Lisans
 

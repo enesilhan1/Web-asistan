@@ -2,8 +2,9 @@
   "name": "web-asistani",
   "private": true,
   "type": "module",
-  "description": "Web Asistanı Chrome eklentisi (derleme adımı yok; testler için Node 22+)",
+  "description": "Web Asistanı tarayıcı eklentisi (Chrome + Firefox; derleme adımı yok; testler için Node 22+)",
   "scripts": {
-    "test": "node --test \"test/**/*.test.js\""
+    "test": "node --test \"test/**/*.test.js\"",
+    "paketle": "node scripts/paketle.mjs"
   }
 }

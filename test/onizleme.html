@@ -8,7 +8,8 @@
     API'si kurar, arka plan döngüsünü (gerçek Asistan sınıfı) sahte bir Claude
     yanıtıyla çalıştırır. Proje kökünden bir HTTP sunucusuyla açılmalı:
       python -m http.server 8123   →   http://localhost:8123/test/onizleme.html
-    ?anahtar=0 → API anahtarı girilmemiş hali, ?hata=1 → API hatası.
+    ?anahtar=0 → API anahtarı girilmemiş hali, ?hata=1 → API hatası,
+    ?izin=0 → site erişim izni verilmemiş hali.
   -->
   <style>
     html { background: #888; }
@@ -17,9 +18,8 @@
 </head>
 <body>
 <script type="module">
-  import { Asistan } from '../src/asistan.js';
-  import { Depo } from '../src/depo.js';
-
+  // Not: src/tarayici.js yüklenirken API nesnesini okur; bu yüzden modüller
+  // aşağıda sahte API kurulduktan sonra dinamik olarak yüklenir.
   const parametre = new URLSearchParams(location.search);
 
   // --- chrome.storage.local (değişiklik olaylarıyla)
@@ -86,14 +86,21 @@
     }), { status: 200 });
   };
 
-  const depo = new Depo(alan);
-  if (parametre.get('anahtar') !== '0') {
-    await depo.ayarlariGuncelle((a) => ({ ...a, anahtarlar: { anthropic: 'sk-ant-onizleme' } }));
-  }
-  const asistan = new Asistan({ depo, tarayici, fetch: sahteFetch, tekrarBeklemesiMs: 1 });
-
+  let izinVar = parametre.get('izin') !== '0';
+  const izinDinleyicileri = [];
+  let asistan;
   window.chrome = {
     storage: { local: alan, onChanged: { addListener: (f) => dinleyiciler.push(f) } },
+    permissions: {
+      contains: async () => izinVar,
+      request: async () => {
+        izinVar = true;
+        izinDinleyicileri.forEach((f) => f());
+        return true;
+      },
+      onAdded: { addListener: (f) => izinDinleyicileri.push(f) },
+      onRemoved: { addListener: () => {} },
+    },
     runtime: {
       id: 'onizleme',
       sendMessage: async (m) => {
@@ -110,6 +117,15 @@
       },
     },
   };
+  tarayici.permissions = window.chrome.permissions;
+
+  const { Asistan } = await import('../src/asistan.js');
+  const { Depo } = await import('../src/depo.js');
+  const depo = new Depo(alan);
+  if (parametre.get('anahtar') !== '0') {
+    await depo.ayarlariGuncelle((a) => ({ ...a, anahtarlar: { anthropic: 'sk-ant-onizleme' } }));
+  }
+  asistan = new Asistan({ depo, tarayici, fetch: sahteFetch, tekrarBeklemesiMs: 1 });
 
   // popup.html'in gövdesini ve stilini bu sayfaya al, sonra popup.js'i yükle.
   const html = await (await fetch('../popup/popup.html')).text();

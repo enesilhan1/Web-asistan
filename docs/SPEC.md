@@ -4,7 +4,8 @@ Bu belge kullanıcıyla netleştirilen kuralların tek kaynağıdır. Kod bu
 kurallara uymalıdır; değişiklik gerekirse önce burası güncellenir.
 
 ## 1. Amaç
-Chrome eklentisi olarak çalışan bir yapay zekâ asistanı. Açık sekmeleri
+Tarayıcı eklentisi olarak çalışan bir yapay zekâ asistanı. **Chrome** (ve
+Chromium tabanlılar) ile **Firefox 140+** aynı kodla desteklenir. Açık sekmeleri
 inceleyip soruları yanıtlar, özetler, karşılaştırır. Geçmişte girilen siteleri
 yalnızca **alan adı + sayfa başlığı** düzeyinde bilir.
 
@@ -57,3 +58,13 @@ açıkça söyler.
   edilebilir veya silinebilir.
 - Her sohbet başladığı sağlayıcı/modele bağlıdır (sağlayıcıların geçmiş
   biçimleri birbirine çevrilemez).
+
+## 8. Tarayıcılar
+- Tek kod tabanı: `manifest.json`'da Chrome için `service_worker`, Firefox için
+  `scripts` (ikisi de `src/arka_plan.js`, modül).
+- API `src/tarayici.js` üzerinden: Firefox'ta `browser`, Chrome'da `chrome`.
+- Firefox: eklenti kimliği `web-asistani@enesilhan1`; veri beyanı
+  `websiteContent` + `browsingActivity` (sayfa metni ve gezinme bilgisi
+  kullanıcının seçtiği sağlayıcıya gider).
+- Site erişim izni kullanıcı tarafından kapatılabilir; kapalıysa popup
+  "İzin ver" şeridi gösterir ve asistan istek göndermez.
