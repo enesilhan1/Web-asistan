@@ -114,3 +114,7 @@ python -m http.server 8123
 
 Sonra `http://localhost:8123/test/onizleme.html` adresini aç
 (`?anahtar=0` anahtarsız hal, `?hata=1` API hatası).
+
+## Lisans
+
+[MIT](LICENSE)
