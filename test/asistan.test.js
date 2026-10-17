@@ -143,6 +143,16 @@ describe('Asistan', () => {
     assert.equal(s.calisiyor, false);
   });
 
+  it('site erişim izni yoksa istek göndermez, izin bilgisi verir', async () => {
+    const k = kur();
+    await k.hazir;
+    k.asistan.tarayici.permissions = { contains: async () => false };
+    await (await k.asistan.gonder(null, 'soru')).bitti;
+    const s = await k.depo.sohbet('s1');
+    assert.equal(k.fetch.istekler.length, 0);
+    assert.deepEqual(s.ogeler.at(-1), { tur: 'bilgi', anahtar: 'bilgi.izinYok', parametreler: {}, hata: true });
+  });
+
   it('API hatasında ham geçmiş geri alınır, hata gösterilir; sonra devam edilebilir', async () => {
     const k = kur({ yanitlar: [{ durum: 401, govde: { error: { message: 'invalid x-api-key' } } }, metinYaniti('Tamam')] });
     await k.hazir;

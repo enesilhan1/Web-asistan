@@ -1,33 +1,35 @@
-// Web Asistanı arka plan (service worker). Sohbet döngüsü burada çalışır ki
-// popup kapansa da yanıt hazırlanmaya devam etsin.
+// Web Asistanı arka plan (Chrome'da service worker, Firefox'ta arka plan
+// betiği). Sohbet döngüsü burada çalışır ki popup kapansa da yanıt
+// hazırlanmaya devam etsin.
 //
 // Popup'tan gelen mesajlar:
 //   {tur: 'gonder', sohbetId, metin}  → {sohbetId} | {hata}
 //   {tur: 'durdur', sohbetId}          → {}
-// Popup sonucu chrome.storage değişikliklerinden izler.
+// Popup sonucu storage değişikliklerinden izler.
 
 import { Asistan } from './asistan.js';
 import { Depo } from './depo.js';
+import { tarayici } from './tarayici.js';
 
-const depo = new Depo(chrome.storage.local);
+const depo = new Depo(tarayici.storage.local);
 
 /**
- * Chrome boşta kalan service worker'ı ~30 sn sonra kapatır; uzun bir API
+ * Tarayıcı boşta kalan arka plan betiğini ~30 sn sonra kapatır; uzun bir API
  * isteği sırasında kapanmasın diye çalışma süresince düzenli olarak bir
  * eklenti API'si çağrılır (zamanlayıcıyı sıfırlar).
  */
 function canliTut() {
-  const t = setInterval(() => chrome.runtime.getPlatformInfo(), 20_000);
+  const t = setInterval(() => tarayici.runtime.getPlatformInfo(), 20_000);
   return () => clearInterval(t);
 }
 
-const asistan = new Asistan({ depo, tarayici: chrome, canliTut });
+const asistan = new Asistan({ depo, tarayici, canliTut });
 
-// Önceki service worker çalışırken sonlandırıldıysa yarıda kalanlar kapanır.
+// Önceki arka plan betiği çalışırken sonlandırıldıysa yarıda kalanlar kapanır.
 const hazir = asistan.yaridaKalanlariKapat().catch((e) => console.error(e));
 
-chrome.runtime.onMessage.addListener((mesaj, gonderen, yanitla) => {
-  if (gonderen.id !== chrome.runtime.id) return false;
+tarayici.runtime.onMessage.addListener((mesaj, gonderen, yanitla) => {
+  if (gonderen.id !== tarayici.runtime.id) return false;
   (async () => {
     await hazir;
     switch (mesaj?.tur) {

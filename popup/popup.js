@@ -1,14 +1,15 @@
 // Popup arayüzü: sohbet, sohbet listesi ve ayarlar. Yanıtlar arka planda
-// hazırlanır (src/arka_plan.js); popup sonucu chrome.storage değişikliklerinden
+// hazırlanır (src/arka_plan.js); popup sonucu storage değişikliklerinden
 // izler, bu yüzden kapatılıp açılsa da sohbet kaldığı yerden görünür.
 
 import { Depo, sohbetAnahtari } from '../src/depo.js';
 import { cevir } from '../src/dil.js';
 import { markdowndanHtml } from '../src/markdown.js';
+import { SITE_IZNI, siteIzniVarMi, tarayici } from '../src/tarayici.js';
 import { SAGLAYICILAR, anahtarBicimiUygun, modelBul, saglayiciBul } from '../src/yz/katalog.js';
 
 const ELLE = '__elle__';
-const depo = new Depo(chrome.storage.local);
+const depo = new Depo(tarayici.storage.local);
 const $ = (id) => document.getElementById(id);
 
 const durum = {
@@ -39,9 +40,12 @@ async function baslat() {
   metinleriUygula();
   olaylariBagla();
   sohbetiCiz();
+  izinSeridiniGuncelle();
+  tarayici.permissions?.onAdded?.addListener(izinSeridiniGuncelle);
+  tarayici.permissions?.onRemoved?.addListener(izinSeridiniGuncelle);
   $('mesaj-kutusu').focus();
 
-  chrome.storage.onChanged.addListener((degisiklikler, alan) => {
+  tarayici.storage.onChanged.addListener((degisiklikler, alan) => {
     if (alan !== 'local') return;
     if (degisiklikler.ayarlar) {
       durum.ayarlar = { ...durum.ayarlar, ...degisiklikler.ayarlar.newValue };
@@ -89,6 +93,12 @@ function gorunumeGec(ad) {
 
 function olaylariBagla() {
   $('sohbetler-dugmesi').addEventListener('click', () => gorunumeGec('liste'));
+  $('izin-ver-dugmesi').addEventListener('click', () => {
+    // Firefox izni yalnızca doğrudan tıklamanın içinde (await'ten önce)
+    // isteyince gösteriyor. Firefox izin penceresini açarken popup'ı
+    // kapatabilir; izin yine de kaydedilir.
+    tarayici.permissions.request(SITE_IZNI).then(izinSeridiniGuncelle, izinSeridiniGuncelle);
+  });
   $('ayarlar-dugmesi').addEventListener('click', () => gorunumeGec('ayarlar'));
   $('yeni-sohbet-dugmesi').addEventListener('click', yeniSohbet);
   $('listeden-yeni-dugmesi').addEventListener('click', yeniSohbet);
@@ -109,7 +119,7 @@ function olaylariBagla() {
     gonder(kutu.value);
   });
   $('durdur-dugmesi').addEventListener('click', () => {
-    if (durum.acikSohbetId) chrome.runtime.sendMessage({ tur: 'durdur', sohbetId: durum.acikSohbetId });
+    if (durum.acikSohbetId) tarayici.runtime.sendMessage({ tur: 'durdur', sohbetId: durum.acikSohbetId });
   });
 
   $('saglayici-secimi').addEventListener('change', (e) => {
@@ -130,6 +140,10 @@ function olaylariBagla() {
   });
 }
 
+async function izinSeridiniGuncelle() {
+  $('izin-seridi').hidden = await siteIzniVarMi();
+}
+
 function kutuyuBoyutlandir() {
   const k = $('mesaj-kutusu');
   k.style.height = 'auto';
@@ -144,7 +158,7 @@ async function gonder(metin) {
   durum.gonderiliyor = true;
   sohbetiCiz();
   try {
-    const yanit = await chrome.runtime.sendMessage({ tur: 'gonder', sohbetId: durum.acikSohbetId, metin: temiz });
+    const yanit = await tarayici.runtime.sendMessage({ tur: 'gonder', sohbetId: durum.acikSohbetId, metin: temiz });
     if (yanit?.hata) throw new Error(yanit.hata);
     $('mesaj-kutusu').value = '';
     kutuyuBoyutlandir();
@@ -349,7 +363,7 @@ async function listeyiCiz() {
     sil.addEventListener('click', async () => {
       if (!confirm(t('ui.silOnay', { baslik: s.baslik }))) return;
       const tam = await depo.sohbet(s.id);
-      if (tam?.calisiyor) chrome.runtime.sendMessage({ tur: 'durdur', sohbetId: s.id });
+      if (tam?.calisiyor) tarayici.runtime.sendMessage({ tur: 'durdur', sohbetId: s.id });
       await depo.sohbetSil(s.id);
       if (durum.acikSohbetId === s.id) {
         durum.acikSohbetId = null;

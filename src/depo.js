@@ -1,4 +1,4 @@
-// Ayarlar ve sohbetler: yalnızca bu bilgisayarda, chrome.storage.local'da
+// Ayarlar ve sohbetler: yalnızca bu bilgisayarda, storage.local'da
 // (docs/SPEC.md §7). Popup ve arka plan aynı modülü kullanır.
 //
 // Anahtarlar:
@@ -24,7 +24,7 @@ export const VARSAYILAN_AYARLAR = Object.freeze({
 export const sohbetAnahtari = (id) => `sohbet:${id}`;
 
 export class Depo {
-  /** @param {chrome.storage.StorageArea} alan */
+  /** @param {{get: Function, set: Function, remove: Function}} alan  storage.local */
   constructor(alan) {
     this.alan = alan;
     this._sira = Promise.resolve();

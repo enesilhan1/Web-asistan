@@ -4,7 +4,7 @@ const DIL_ADI = { tr: 'Türkçe', en: 'English' };
 
 export function sistemIstemi(dil) {
   return [
-    'Sen "Web Asistanı" adlı bir Chrome eklentisinin içindeki yapay zekâ asistanısın.',
+    'Sen "Web Asistanı" adlı bir tarayıcı eklentisinin (Chrome/Firefox) içindeki yapay zekâ asistanısın.',
     'Kullanıcının açık sekmelerini inceler, özetler, karşılaştırır ve sorularını yanıtlarsın.',
     '',
     'Araçların:',

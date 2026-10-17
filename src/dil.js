@@ -28,8 +28,9 @@ export const METINLER = {
     'bilgi.ret': '{ad} bu isteği yanıtlayamadı. Farklı bir şekilde sormayı dene.',
     'bilgi.uzunluk': 'Yanıt çok uzun olduğu için yarıda kesildi.',
     'bilgi.turSiniri': 'Asistan çok fazla adım attığı için durduruldu. Gerekirse "devam et" yaz.',
-    'bilgi.yarida': 'Yanıt yarıda kaldı (Chrome arka plan işlemini kapattı). Mesajını tekrar gönderebilirsin.',
+    'bilgi.yarida': 'Yanıt yarıda kaldı (tarayıcı arka plan işlemini kapattı). Mesajını tekrar gönderebilirsin.',
     'bilgi.beklenmeyen': 'Beklenmeyen bir hata oluştu: {mesaj}',
+    'bilgi.izinYok': "Web Asistanı'nın sitelere erişim izni yok. Üstteki “İzin ver” düğmesine bas, sonra mesajını tekrar gönder.",
 
     'ui.yeniSohbet': 'Yeni sohbet',
     'ui.sohbetler': 'Sohbetler',
@@ -71,6 +72,8 @@ export const METINLER = {
     'ui.fiyat': 'Milyon token başına: girdi ${girdi}, çıktı ${cikti}',
     'ui.gizlilik':
       'Anahtarlar ve sohbetler yalnızca bu bilgisayarda saklanır. Asistan bir sayfayı okuduğunda ya da geçmişte aradığında, bu veriler yalnızca seçtiğin sağlayıcıya gönderilir. Geçmişten yalnızca alan adı ve sayfa başlığı gider.',
+    'ui.izinGerekli': 'Sekmeleri okuyabilmem için sitelere erişim izni gerekiyor.',
+    'ui.izinVer': 'İzin ver',
     'ui.sohbetModeli': 'Bu sohbet {model} ile başladı ve onunla devam eder. Başka model için yeni sohbet aç.',
   },
   en: {
@@ -96,8 +99,9 @@ export const METINLER = {
     'bilgi.ret': '{ad} could not answer this request. Try asking differently.',
     'bilgi.uzunluk': 'The response was cut off because it was too long.',
     'bilgi.turSiniri': 'The assistant was stopped because it took too many steps. Type "continue" if needed.',
-    'bilgi.yarida': 'The response was interrupted (Chrome stopped the background process). You can send your message again.',
+    'bilgi.yarida': 'The response was interrupted (the browser stopped the background process). You can send your message again.',
     'bilgi.beklenmeyen': 'An unexpected error occurred: {mesaj}',
+    'bilgi.izinYok': 'Web Assistant has no permission to access websites. Press “Allow” at the top, then send your message again.',
 
     'ui.yeniSohbet': 'New chat',
     'ui.sohbetler': 'Chats',
@@ -139,6 +143,8 @@ export const METINLER = {
     'ui.fiyat': 'Per million tokens: input ${girdi}, output ${cikti}',
     'ui.gizlilik':
       'Keys and chats are stored only on this computer. When the assistant reads a page or searches your history, that data is sent only to the provider you chose. From history, only the domain and page title are sent.',
+    'ui.izinGerekli': 'I need permission to access websites to read your tabs.',
+    'ui.izinVer': 'Allow',
     'ui.sohbetModeli': 'This chat started with {model} and continues with it. Start a new chat to use another model.',
   },
 };

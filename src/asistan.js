@@ -5,6 +5,7 @@
 
 import { ARACLAR, aracCalistir } from './araclar/araclar.js';
 import { baglamMetni, sistemIstemi } from './sistem.js';
+import { siteIzniVarMi } from './tarayici.js';
 import { istemciOlustur } from './yz/istemciler.js';
 import { maliyet, modelBul, saglayiciBul } from './yz/katalog.js';
 import { YanitSonu, YzHatasi } from './yz/ortak.js';
@@ -119,8 +120,12 @@ export class Asistan {
       sohbet.ogeler.push({ tur: 'bilgi', anahtar, parametreler, hata });
 
     const anahtar = (ayarlar.anahtarlar[sohbet.saglayici] ?? '').trim();
-    if (!anahtar) {
-      bilgi('bilgi.anahtarYok', { ad }, true);
+    // Site erişimi olmadan sayfalar okunamaz; Firefox'ta sağlayıcıya bağlantı
+    // da engellenebilir.
+    const izinYok = !(await siteIzniVarMi(this.tarayici));
+    if (!anahtar || izinYok) {
+      if (!anahtar) bilgi('bilgi.anahtarYok', { ad }, true);
+      else bilgi('bilgi.izinYok', {}, true);
       sohbet.calisiyor = false;
       this.calisanlar.delete(sohbet.id);
       await this._kaydet(sohbet);

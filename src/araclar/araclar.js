@@ -1,14 +1,16 @@
 // Asistanın araçları (docs/SPEC.md §3–5). Hepsi yalnızca okur: sayfalarda
 // tıklama, gezinme, sekme açma/kapama/yenileme yok.
 //
-// Chrome API'leri parametre olarak verilir ([tarayici]); testlerde sahtesi
-// kullanılır.
+// Tarayıcı API'leri (Chrome/Firefox) parametre olarak verilir ([tarayici]);
+// testlerde sahtesi kullanılır.
+
+import { siteIzniVarMi } from '../tarayici.js';
 
 /** Bir seferde döndürülen en fazla sayfa metni (karakter). */
 export const PARCA_UZUNLUGU = 30000;
 export const GECMIS_VARSAYILAN = 50;
 export const GECMIS_EN_FAZLA = 200;
-/** Sorgulu aramada Chrome'dan istenen ham kayıt sayısı (süzmeden önce). */
+/** Sorgulu aramada tarayıcıdan istenen ham kayıt sayısı (süzmeden önce). */
 const GECMIS_HAM_SINIR = 5000;
 
 /** @type {import('../yz/ortak.js').AracTanimi[]} */
@@ -65,7 +67,7 @@ export class AracHatasi extends Error {}
 /**
  * Araç çağrısını çalıştırır.
  * @param {import('../yz/ortak.js').AracCagrisi} cagri
- * @param {any} tarayici  chrome nesnesi ya da sahtesi
+ * @param {any} tarayici  chrome/browser nesnesi ya da sahtesi
  * @returns {Promise<import('../yz/ortak.js').AracSonucu>}
  */
 export async function aracCalistir(cagri, tarayici) {
@@ -86,9 +88,28 @@ export async function aracCalistir(cagri, tarayici) {
 }
 
 /**
- * Chrome'un eklentilere içeriğini okutmadığı adresler. Bunların dışında da
- * okuma başarısız olabilir (ör. PDF görüntüleyici); o zaman Chrome'un hatası
- * yakalanır.
+ * Firefox'un eklentilere okutmadığı Mozilla alan adları
+ * (extensions.webextensions.restrictedDomains varsayılanı).
+ */
+const FIREFOX_YASAK_ALANLAR = new Set([
+  'accounts-static.cdn.mozilla.net',
+  'accounts.firefox.com',
+  'addons.cdn.mozilla.net',
+  'addons.mozilla.org',
+  'api.accounts.firefox.com',
+  'content.cdn.mozilla.net',
+  'discovery.addons.mozilla.org',
+  'install.mozilla.org',
+  'oauth.accounts.firefox.com',
+  'profile.accounts.firefox.com',
+  'support.mozilla.org',
+  'sync.services.mozilla.com',
+]);
+
+/**
+ * Tarayıcıların eklentilere içeriğini okutmadığı adresler (chrome://, about:,
+ * eklenti mağazaları...). Bunların dışında da okuma başarısız olabilir (ör.
+ * PDF görüntüleyici); o zaman tarayıcının hatası yakalanır.
  */
 export function okunabilirMi(url) {
   let u;
@@ -100,6 +121,7 @@ export function okunabilirMi(url) {
   if (!['http:', 'https:', 'file:'].includes(u.protocol)) return false;
   if (u.hostname === 'chromewebstore.google.com') return false;
   if (u.hostname === 'chrome.google.com' && u.pathname.startsWith('/webstore')) return false;
+  if (FIREFOX_YASAK_ALANLAR.has(u.hostname)) return false;
   return true;
 }
 
@@ -150,13 +172,13 @@ async function sekmeyiOku(tarayici, girdi) {
   }
   if (!okunabilirMi(sekme.url ?? '')) {
     throw new AracHatasi(
-      `Chrome bu sayfanın okunmasına izin vermiyor (${sekme.url || 'adres yok'}). ` +
-        'chrome:// sayfaları, Chrome Web Mağazası ve benzerleri okunamaz.',
+      `Tarayıcı bu sayfanın okunmasına izin vermiyor (${sekme.url || 'adres yok'}). ` +
+        'chrome:// ve about: sayfaları, eklenti mağazaları ve benzerleri okunamaz.',
     );
   }
   if (sekme.discarded) {
     throw new AracHatasi(
-      'Sekme uykuda (Chrome bellek tasarrufu için kapatmış). Kullanıcı sekmeye tıklayıp açarsa okunabilir.',
+      'Sekme uykuda (tarayıcı bellek tasarrufu için kapatmış). Kullanıcı sekmeye tıklayıp açarsa okunabilir.',
     );
   }
 
@@ -165,11 +187,18 @@ async function sekmeyiOku(tarayici, girdi) {
     const [cerceve] = await tarayici.scripting.executeScript({ target: { tabId: id }, func: sayfaMetni });
     sonuc = cerceve?.result;
   } catch (e) {
+    if (!(await siteIzniVarMi(tarayici))) {
+      throw new AracHatasi(
+        'Web Asistanı\'nın sitelere erişim izni yok. Kullanıcı eklenti penceresinin üstündeki ' +
+          '"İzin ver" düğmesine basmalı.',
+      );
+    }
     const dosya = sekme.url.startsWith('file:');
     throw new AracHatasi(
       dosya
-        ? 'Yerel dosya okunamadı. Kullanıcı chrome://extensions sayfasında Web Asistanı için ' +
-            '"Dosya URL\'lerine erişime izin ver" seçeneğini açmalı.'
+        ? 'Yerel dosya okunamadı. Chrome\'da kullanıcı chrome://extensions sayfasında Web Asistanı ' +
+            'için "Dosya URL\'lerine erişime izin ver" seçeneğini açmalı; Firefox yerel dosyaları ' +
+            'eklentilere okutmayabilir.'
         : `Sayfa okunamadı (${e?.message ?? 'bilinmeyen hata'}). PDF görüntüleyici ve bazı özel ` +
             'sayfalar okunamaz; sayfa hâlâ yükleniyorsa biraz sonra tekrar denenebilir.',
     );
@@ -199,7 +228,7 @@ async function sekmeyiOku(tarayici, girdi) {
 }
 
 /**
- * Sayfanın içinde çalışır (chrome.scripting.executeScript); bu yüzden dışarıdan
+ * Sayfanın içinde çalışır (scripting.executeScript); bu yüzden dışarıdan
  * hiçbir şey kullanmamalı. Sadece okur.
  */
 export function sayfaMetni() {
@@ -240,14 +269,14 @@ async function gecmisteAra(tarayici, girdi) {
   if (!Number.isInteger(enFazla) || enFazla < 1) throw new AracHatasi('"en_fazla" pozitif bir tam sayı olmalı.');
   enFazla = Math.min(enFazla, GECMIS_EN_FAZLA);
 
-  // startTime 0: tüm geçmiş (verilmezse Chrome yalnızca son 24 saate bakar).
+  // startTime 0: tüm geçmiş (verilmezse tarayıcı yalnızca son 24 saate bakar).
   const kayitlar = await tarayici.history.search({
     text: sorgu,
     startTime: 0,
     maxResults: sorgu ? GECMIS_HAM_SINIR : enFazla * 10,
   });
 
-  // Chrome tam adreste de eşleştirir; model adresi görmeyeceği için yalnızca
+  // Tarayıcı tam adreste de eşleştirir; model adresi görmeyeceği için yalnızca
   // alan adı ya da başlıkta geçen kelimeler sayılır (adres dolaylı yoldan da
   // sızmasın).
   const kelimeler = kucult(sorgu).split(/\s+/).filter(Boolean);

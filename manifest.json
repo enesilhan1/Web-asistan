@@ -10,10 +10,20 @@
     "48": "icons/ikon48.png",
     "128": "icons/ikon128.png"
   },
-  "permissions": ["tabs", "history", "scripting", "storage"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "tabs",
+    "history",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "src/arka_plan.js",
+    "scripts": [
+      "src/arka_plan.js"
+    ],
     "type": "module"
   },
   "action": {
@@ -24,5 +34,17 @@
     },
     "default_title": "__MSG_eklentiAdi__"
   },
-  "minimum_chrome_version": "120"
+  "minimum_chrome_version": "120",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "web-asistani@enesilhan1",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "websiteContent",
+          "browsingActivity"
+        ]
+      }
+    }
+  }
 }
