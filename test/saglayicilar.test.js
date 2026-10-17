@@ -268,6 +268,13 @@ describe('Gemini', () => {
     });
   });
 
+  it('parametresiz araçta şema gönderilmez', async () => {
+    const { i, fetch } = istemci('gemini', '', [{ govde: { candidates: [{ content: { parts: [] } }] } }]);
+    i.kullaniciEkle('b', 'm');
+    await i.yanitAl({ sistem: SISTEM, araclar: [{ ad: 'liste', aciklama: 'a', sema: { type: 'object', properties: {} } }] });
+    assert.deepEqual(fetch.istekler[0].govde.tools[0].functionDeclarations[0], { name: 'liste', description: 'a' });
+  });
+
   it('aday yoksa ret, kimlikli çağrıda id geri gönderilir', async () => {
     const r = istemci('gemini', '', [{ govde: { promptFeedback: { blockReason: 'SAFETY' } } }]);
     r.i.kullaniciEkle('b', 'm');

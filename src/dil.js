@@ -24,6 +24,12 @@ export const METINLER = {
     'hata.kota.gemini':
       'Gemini kullanım kotan doldu (ücretsiz kotada dakikalık ve günlük sınır var). Biraz sonra tekrar dene ya da aistudio.google.com üzerinden faturalandırmayı aç.',
     'hata.durduruldu': 'Durduruldu.',
+    'bilgi.anahtarYok': '{ad} API anahtarı girilmemiş. Ayarlar bölümünden ekle.',
+    'bilgi.ret': '{ad} bu isteği yanıtlayamadı. Farklı bir şekilde sormayı dene.',
+    'bilgi.uzunluk': 'Yanıt çok uzun olduğu için yarıda kesildi.',
+    'bilgi.turSiniri': 'Asistan çok fazla adım attığı için durduruldu. Gerekirse "devam et" yaz.',
+    'bilgi.yarida': 'Yanıt yarıda kaldı (Chrome arka plan işlemini kapattı). Mesajını tekrar gönderebilirsin.',
+    'bilgi.beklenmeyen': 'Beklenmeyen bir hata oluştu: {mesaj}',
   },
   en: {
     'hata.zamanAsimi': '{ad} took too long to respond. Try again.',
@@ -44,6 +50,12 @@ export const METINLER = {
     'hata.kota.gemini':
       'Your Gemini quota is used up (the free tier has per-minute and daily limits). Try again later or enable billing at aistudio.google.com.',
     'hata.durduruldu': 'Stopped.',
+    'bilgi.anahtarYok': 'No {ad} API key has been entered. Add one in Settings.',
+    'bilgi.ret': '{ad} could not answer this request. Try asking differently.',
+    'bilgi.uzunluk': 'The response was cut off because it was too long.',
+    'bilgi.turSiniri': 'The assistant was stopped because it took too many steps. Type "continue" if needed.',
+    'bilgi.yarida': 'The response was interrupted (Chrome stopped the background process). You can send your message again.',
+    'bilgi.beklenmeyen': 'An unexpected error occurred: {mesaj}',
   },
 };
 

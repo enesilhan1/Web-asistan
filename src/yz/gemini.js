@@ -28,7 +28,11 @@ export class GeminiIstemcisi extends GecmisliIstemci {
           functionDeclarations: araclar.map((a) => ({
             name: a.ad,
             description: a.aciklama,
-            parameters: geminiSemasi(a.sema),
+            // Gemini, özelliksiz OBJECT şemasını reddediyor; parametresiz
+            // araçta şema hiç gönderilmez.
+            ...(Object.keys(a.sema.properties ?? {}).length
+              ? { parameters: geminiSemasi(a.sema) }
+              : {}),
           })),
         },
       ],
