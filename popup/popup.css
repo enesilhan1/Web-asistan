@@ -184,6 +184,37 @@ svg {
   padding: 8px 10px;
 }
 
+/* Site onayı */
+.onay {
+  align-self: stretch;
+  border: 1px solid var(--cizgi);
+  border-left: 3px solid var(--uyari);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--zemin);
+}
+.onay-baslik { font-weight: 600; font-size: 13px; }
+.onay-adres {
+  font: 11.5px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: var(--soluk);
+  overflow-wrap: anywhere;
+  max-height: 4.2em;
+  overflow: hidden;
+}
+.onay-aciklama { font-size: 12px; color: var(--soluk); }
+.onay-dugmeleri { display: flex; justify-content: flex-end; gap: 8px; }
+.onay-dugmeleri .ikincil { padding: 5px 12px; }
+.onay-dugmeleri button:disabled { opacity: .5; cursor: default; }
+.onay:not(.bekliyor) {
+  border-left-color: var(--cizgi);
+  padding: 4px 10px;
+  color: var(--soluk);
+}
+.onay:not(.bekliyor) .onay-baslik { font-weight: 400; font-size: 12px; }
+
 .yaziyor {
   align-self: flex-start;
   color: var(--soluk);

@@ -5,6 +5,7 @@
 // Popup'tan gelen mesajlar:
 //   {tur: 'gonder', sohbetId, metin}  → {sohbetId} | {hata}
 //   {tur: 'durdur', sohbetId}          → {}
+//   {tur: 'onay', onayId, kabul}       → {}   site onayı kararı
 // Popup sonucu storage değişikliklerinden izler.
 
 import { Asistan } from './asistan.js';
@@ -40,6 +41,9 @@ tarayici.runtime.onMessage.addListener((mesaj, gonderen, yanitla) => {
       }
       case 'durdur':
         asistan.durdur(mesaj.sohbetId);
+        return {};
+      case 'onay':
+        asistan.karar(mesaj.onayId, mesaj.kabul === true);
         return {};
       default:
         return { hata: 'bilinmeyen mesaj' };

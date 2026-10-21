@@ -228,7 +228,8 @@ function sohbetiCiz() {
     const y = document.createElement('div');
     y.className = 'yaziyor';
     y.innerHTML = '<span class="noktalar"><i></i><i></i><i></i></span>';
-    y.append(t('ui.dusunuyor'));
+    const onayBekliyor = s?.ogeler.some((o) => o.tur === 'onay' && o.durum === 'bekliyor');
+    y.append(t(onayBekliyor ? 'ui.onayBekliyor' : 'ui.dusunuyor'));
     kutu.append(y);
   }
   if (enAltta || calisiyor) kutu.scrollTop = kutu.scrollHeight;
@@ -277,7 +278,56 @@ const ARAC_SIMGELERI = {
   sekmeleri_listele: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>',
   sekmeyi_oku: '<svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
   gecmiste_ara: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  sayfayi_ac: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
+  sayfayi_genisleterek_oku: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10l4 4 4-4"/></svg>',
+  github_repo_agaci: '<svg viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></svg>',
+  github_dosya_oku: '<svg viewBox="0 0 24 24"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/></svg>',
 };
+
+/** Adresi kısa göstermek için: alan adı + yol (en fazla 60 karakter). */
+function kisaAdres(url) {
+  try {
+    const u = new URL(url);
+    const metin = u.hostname.replace(/^www\./, '') + (u.pathname === '/' ? '' : decodeURI(u.pathname));
+    return metin.length > 60 ? `${metin.slice(0, 57)}…` : metin;
+  } catch {
+    return String(url ?? '').slice(0, 60);
+  }
+}
+
+function onayCiz(o) {
+  const d = document.createElement('div');
+  d.className = `onay ${o.durum}`;
+  const baslik = document.createElement('div');
+  baslik.className = 'onay-baslik';
+  const adres = document.createElement('div');
+  adres.className = 'onay-adres';
+  adres.textContent = o.url;
+  if (o.durum !== 'bekliyor') {
+    baslik.textContent = t(`ui.onay.${o.durum}`, { site: o.site });
+    d.append(baslik);
+    return d;
+  }
+  baslik.textContent = t('ui.onay.soru', { site: o.site });
+  const aciklama = document.createElement('div');
+  aciklama.className = 'onay-aciklama';
+  aciklama.textContent = t('ui.onay.aciklama', { site: o.site });
+  const dugmeler = document.createElement('div');
+  dugmeler.className = 'onay-dugmeleri';
+  for (const [anahtar, kabul, sinif] of [['ui.onay.reddet', false, 'ikincil'], ['ui.onay.ver', true, 'birincil kucuk']]) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = sinif;
+    b.textContent = t(anahtar);
+    b.addEventListener('click', () => {
+      for (const x of dugmeler.querySelectorAll('button')) x.disabled = true;
+      tarayici.runtime.sendMessage({ tur: 'onay', onayId: o.id, kabul });
+    });
+    dugmeler.append(b);
+  }
+  d.append(baslik, adres, aciklama, dugmeler);
+  return d;
+}
 
 function ogeCiz(o) {
   const d = document.createElement('div');
@@ -303,6 +353,8 @@ function ogeCiz(o) {
       d.className = o.hata ? 'bilgi hata' : 'bilgi';
       d.textContent = t(o.anahtar, o.parametreler);
       break;
+    case 'onay':
+      return onayCiz(o);
   }
   return d;
 }
@@ -314,6 +366,14 @@ function aracMetni({ ad, girdi = {} }) {
   if (ad === 'gecmiste_ara') {
     const sorgu = String(girdi.sorgu ?? '').trim();
     return sorgu ? t('ui.arac.gecmiste_ara', { sorgu }) : t('ui.arac.gecmiste_ara.bos');
+  }
+  if (ad === 'sayfayi_ac' || ad === 'sayfayi_genisleterek_oku') {
+    const adres = girdi.url ? kisaAdres(girdi.url) : `#${girdi.sekme_id}`;
+    return t(girdi.baslangic > 0 ? 'ui.arac.devam' : `ui.arac.${ad}`, { adres });
+  }
+  if (ad === 'github_repo_agaci') return t(`ui.arac.${ad}`, { depo: girdi.depo, yol: girdi.yol ? ` (${girdi.yol})` : '' });
+  if (ad === 'github_dosya_oku') {
+    return t(girdi.baslangic > 0 ? 'ui.arac.devam' : `ui.arac.${ad}`, { depo: girdi.depo, yol: girdi.yol, adres: girdi.yol });
   }
   return t(`ui.arac.${ad}`);
 }

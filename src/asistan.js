@@ -2,16 +2,19 @@
 // çağrılarını çalıştırır, model sözünü bitirene kadar devam eder. Arka planda
 // (service worker) çalışır; her adımda sohbet kaydedilir, popup değişikliği
 // depodan izler. Böylece popup kapansa da yanıt kaybolmaz (docs/SPEC.md §6).
+//
+// Adım sınırı yoktur (§5): model sözünü bitirene ya da kullanıcı durdurana
+// kadar devam edilir. Yeni bir siteye gitmeden önce kullanıcıdan onay
+// istenir; onay o sohbet boyunca geçerlidir (§9).
 
 import { ARACLAR, aracCalistir } from './araclar/araclar.js';
+import { siteAnahtari } from './araclar/site.js';
 import { baglamMetni, sistemIstemi } from './sistem.js';
 import { siteIzniVarMi } from './tarayici.js';
 import { istemciOlustur } from './yz/istemciler.js';
 import { maliyet, modelBul, saglayiciBul } from './yz/katalog.js';
 import { YanitSonu, YzHatasi } from './yz/ortak.js';
 
-/** Bir kullanıcı mesajı için en fazla model turu (her turda birden çok araç olabilir). */
-export const EN_FAZLA_TUR = 10;
 const BASLIK_UZUNLUGU = 60;
 
 /**
@@ -20,6 +23,9 @@ const BASLIK_UZUNLUGU = 60;
  *   {tur: 'asistan', metin}
  *   {tur: 'arac', ad, girdi}                       asistanın kullandığı araç
  *   {tur: 'bilgi', anahtar, parametreler, hata}    dil anahtarlı durum/hata
+ *   {tur: 'onay', id, site, url, durum}            site onayı; durum: bekliyor |
+ *                                                  verildi | reddedildi | iptal
+ * Sohbetin izinliSiteler listesi onay verilen siteleri tutar (yeni sohbette boş).
  */
 export class Asistan {
   /**
@@ -39,6 +45,13 @@ export class Asistan {
     this.tekrarBeklemesiMs = tekrarBeklemesiMs;
     /** @type {Map<string, AbortController>} çalışan sohbetler */
     this.calisanlar = new Map();
+    /** @type {Map<string, (kabul: boolean) => void>} kullanıcı kararı bekleyen onaylar */
+    this.bekleyenOnaylar = new Map();
+  }
+
+  /** Popup'tan gelen onay kararı. */
+  karar(onayId, kabul) {
+    this.bekleyenOnaylar.get(onayId)?.(Boolean(kabul));
   }
 
   /**
@@ -75,6 +88,7 @@ export class Asistan {
         modelId: model.id,
         ogeler: [],
         gecmis: [],
+        izinliSiteler: [],
         maliyet: 0,
         maliyetBilinmiyor: false,
         calisiyor: false,
@@ -107,6 +121,7 @@ export class Asistan {
       const s = await this.depo.sohbet(ozet.id);
       if (!s?.calisiyor) continue;
       s.calisiyor = false;
+      for (const o of s.ogeler) if (o.tur === 'onay' && o.durum === 'bekliyor') o.durum = 'iptal';
       s.ogeler.push({ tur: 'bilgi', anahtar: 'bilgi.yarida', parametreler: {}, hata: true });
       await this._kaydet(s, { guncellemeyiDegistirme: true });
     }
@@ -141,13 +156,21 @@ export class Asistan {
       tekrarBeklemesiMs: this.tekrarBeklemesiMs,
     });
 
+    sohbet.izinliSiteler ??= [];
+    const etkinSekme = await this._etkinSekme();
+    // Kullanıcının o an baktığı site bu sohbet için izinli sayılır (§9).
+    const etkinSite = etkinSekme && siteAnahtari(etkinSekme.url ?? '');
+    if (etkinSite && !sohbet.izinliSiteler.includes(etkinSite)) sohbet.izinliSiteler.push(etkinSite);
+    const aracOrtami = {
+      fetch: this.fetch,
+      sinyal,
+      githubAnahtari: (ayarlar.githubAnahtari ?? '').trim() || undefined,
+      siteIzni: (url) => this._siteIzni(sohbet, url, sinyal),
+    };
+
     try {
-      istemci.kullaniciEkle(
-        baglamMetni({ simdi: this.simdi(), dil: ayarlar.dil, etkinSekme: await this._etkinSekme() }),
-        metin,
-      );
-      let tur = 0;
-      for (; tur < EN_FAZLA_TUR; tur++) {
+      istemci.kullaniciEkle(baglamMetni({ simdi: this.simdi(), dil: ayarlar.dil, etkinSekme }), metin);
+      for (;;) {
         const yanit = await istemci.yanitAl({
           sistem: sistemIstemi(ayarlar.dil),
           araclar: ARACLAR,
@@ -176,12 +199,12 @@ export class Asistan {
         const sonuclar = [];
         for (const c of yanit.cagrilar) {
           if (sinyal.aborted) throw new YzHatasi('hata.durduruldu');
-          sonuclar.push(await aracCalistir(c, this.tarayici));
+          sonuclar.push(await aracCalistir(c, this.tarayici, aracOrtami));
         }
+        if (sinyal.aborted) throw new YzHatasi('hata.durduruldu');
         istemci.sonuclariEkle(sonuclar);
         await this._kaydet(sohbet);
       }
-      if (tur === EN_FAZLA_TUR) bilgi('bilgi.turSiniri');
     } catch (e) {
       if (e instanceof YzHatasi) {
         bilgi(e.anahtar, e.parametreler, e.anahtar !== 'hata.durduruldu');
@@ -196,6 +219,49 @@ export class Asistan {
       this.calisanlar.delete(sohbet.id);
       await this._kaydet(sohbet);
       bitir();
+    }
+  }
+
+  /**
+   * Site onayı: sohbette izinliyse hemen evet; değilse popup'ta kullanıcıya
+   * sorar ve kararını bekler. Durdurulursa hayır.
+   */
+  async _siteIzni(sohbet, url, sinyal) {
+    const site = siteAnahtari(url);
+    if (!site) return false;
+    if (sohbet.izinliSiteler.includes(site)) return true;
+    if (sinyal.aborted) return false;
+
+    const oge = { tur: 'onay', id: this.kimlikUret(), site, url, durum: 'bekliyor' };
+    sohbet.ogeler.push(oge);
+    await this._kaydet(sohbet);
+    this._rozet('?');
+
+    const kabul = await new Promise((coz) => {
+      const bitir = (k) => {
+        this.bekleyenOnaylar.delete(oge.id);
+        sinyal.removeEventListener('abort', iptal);
+        coz(k);
+      };
+      const iptal = () => bitir(null);
+      this.bekleyenOnaylar.set(oge.id, bitir);
+      sinyal.addEventListener('abort', iptal, { once: true });
+    });
+
+    if (!this.bekleyenOnaylar.size) this._rozet('');
+    oge.durum = kabul === null ? 'iptal' : kabul ? 'verildi' : 'reddedildi';
+    if (kabul && !sohbet.izinliSiteler.includes(site)) sohbet.izinliSiteler.push(site);
+    await this._kaydet(sohbet);
+    return Boolean(kabul);
+  }
+
+  /** Onay beklenirken eklenti simgesinde işaret (popup kapalıyken fark edilsin). */
+  _rozet(metin) {
+    try {
+      this.tarayici.action?.setBadgeText({ text: metin })?.catch?.(() => {});
+      if (metin) this.tarayici.action?.setBadgeBackgroundColor({ color: '#d9480f' })?.catch?.(() => {});
+    } catch {
+      // rozet önemsiz
     }
   }
 
