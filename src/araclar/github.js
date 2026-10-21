@@ -148,7 +148,7 @@ export async function githubDosyaOku(girdi, ortam) {
     {
       baslik: `${sahip}/${ad}: ${yol}`,
       url: `https://github.com/${sahip}/${ad}/blob/${yolKodla(dal)}/${yolKodla(yol)}`,
-      metin: metin.replace(/\r/g, ''),
+      metin: metin.replace(/\r/g, '').trimEnd(),
     },
     baslangic,
     { devamIpucu: 'github_dosya_oku aracını aynı depo/yol ve' },

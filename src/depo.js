@@ -2,7 +2,8 @@
 // (docs/SPEC.md §7). Popup ve arka plan aynı modülü kullanır.
 //
 // Anahtarlar:
-//   ayarlar          {dil, saglayici, modeller: {saglayici: modelId}, anahtarlar: {saglayici: anahtar}}
+//   ayarlar          {dil, saglayici, modeller: {saglayici: modelId}, anahtarlar: {saglayici: anahtar},
+//                     githubAnahtari}
 //   sohbetler        [{id, baslik, guncelleme, saglayici, modelId}] (yeniden eskiye)
 //   sohbet:<id>      tam sohbet (aşağıda)
 //   acikSohbet       popup'ta açık sohbetin kimliği (yoksa yeni sohbet)
@@ -19,6 +20,7 @@ export const VARSAYILAN_AYARLAR = Object.freeze({
   saglayici: VARSAYILAN_SAGLAYICI,
   modeller: {},
   anahtarlar: {},
+  githubAnahtari: '',
 });
 
 export const sohbetAnahtari = (id) => `sohbet:${id}`;

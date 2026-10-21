@@ -74,6 +74,10 @@ export const METINLER = {
       'Anahtarlar ve sohbetler yalnızca bu bilgisayarda saklanır. Asistan bir sayfayı okuduğunda ya da geçmişte aradığında, bu veriler yalnızca seçtiğin sağlayıcıya gönderilir. Geçmişten yalnızca alan adı ve sayfa başlığı gider.',
     'ui.izinGerekli': 'Sekmeleri okuyabilmem için sitelere erişim izni gerekiyor.',
     'ui.izinVer': 'İzin ver',
+    'ui.githubAnahtari': 'GitHub token (isteğe bağlı)',
+    'ui.githubIpucu':
+      'Repo incelemede anahtarsız GitHub sınırı saatte 60 istek. Token ile sınır yükselir ve özel repoların okunabilir. Salt okuma (Contents: Read) izni yeterli; token yalnızca GitHub\'a gönderilir.',
+    'ui.githubAl': 'Token oluştur: github.com',
     'ui.sohbetModeli': 'Bu sohbet {model} ile başladı ve onunla devam eder. Başka model için yeni sohbet aç.',
   },
   en: {
@@ -145,6 +149,10 @@ export const METINLER = {
       'Keys and chats are stored only on this computer. When the assistant reads a page or searches your history, that data is sent only to the provider you chose. From history, only the domain and page title are sent.',
     'ui.izinGerekli': 'I need permission to access websites to read your tabs.',
     'ui.izinVer': 'Allow',
+    'ui.githubAnahtari': 'GitHub token (optional)',
+    'ui.githubIpucu':
+      'Without a key, GitHub allows 60 requests per hour for repo reviews. A token raises the limit and lets the assistant read your private repos. Read-only (Contents: Read) access is enough; the token is sent only to GitHub.',
+    'ui.githubAl': 'Create a token: github.com',
     'ui.sohbetModeli': 'This chat started with {model} and continues with it. Start a new chat to use another model.',
   },
 };

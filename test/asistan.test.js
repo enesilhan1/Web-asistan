@@ -217,7 +217,7 @@ describe('Asistan', () => {
 describe('Depo', () => {
   it('varsayılan ayarlar ve güncelleme', async () => {
     const depo = new Depo(sahteAlan());
-    assert.deepEqual(await depo.ayarlar(), { dil: 'tr', saglayici: 'anthropic', modeller: {}, anahtarlar: {} });
+    assert.deepEqual(await depo.ayarlar(), { dil: 'tr', saglayici: 'anthropic', modeller: {}, anahtarlar: {}, githubAnahtari: '' });
     await depo.ayarlariGuncelle((a) => ({ ...a, dil: 'en', anahtarlar: { gemini: 'g' } }));
     const a = await depo.ayarlar();
     assert.equal(a.dil, 'en');

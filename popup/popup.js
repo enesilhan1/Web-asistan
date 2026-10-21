@@ -134,6 +134,11 @@ function olaylariBagla() {
     k.type = k.type === 'password' ? 'text' : 'password';
     anahtarGosterMetni();
   });
+  $('github-goster').addEventListener('click', () => {
+    const k = $('github-kutusu');
+    k.type = k.type === 'password' ? 'text' : 'password';
+    anahtarGosterMetni();
+  });
   $('ayarlar-formu').addEventListener('submit', (e) => {
     e.preventDefault();
     ayarlariKaydet();
@@ -392,6 +397,8 @@ function ayarlariAc() {
     }),
   );
   $('kayit-durumu').textContent = '';
+  $('github-kutusu').value = durum.taslak.githubAnahtari ?? '';
+  $('github-kutusu').type = 'password';
   ayarSaglayicisiniGoster(durum.taslak.saglayici);
 }
 
@@ -454,7 +461,9 @@ function modelAlaniniGuncelle() {
 }
 
 function anahtarGosterMetni() {
-  $('anahtar-goster').textContent = t($('anahtar-kutusu').type === 'password' ? 'ui.anahtarGoster' : 'ui.anahtarGizle');
+  for (const [kutu, dugme] of [['anahtar-kutusu', 'anahtar-goster'], ['github-kutusu', 'github-goster']]) {
+    $(dugme).textContent = t($(kutu).type === 'password' ? 'ui.anahtarGoster' : 'ui.anahtarGizle');
+  }
 }
 
 function anahtarUyarisiniGuncelle() {
@@ -469,6 +478,7 @@ async function ayarlariKaydet() {
   taslagaAl();
   durum.taslak.saglayici = durum.ayarSaglayici;
   durum.taslak.dil = $('dil-secimi').value;
+  durum.taslak.githubAnahtari = $('github-kutusu').value.trim();
   const yeni = structuredClone(durum.taslak);
   await depo.ayarlariGuncelle(() => yeni);
   durum.ayarlar = yeni;
