@@ -334,3 +334,40 @@ describe('Ortak istemci davranışı', () => {
     assert.equal(gecmis.length, 2);
   });
 });
+
+describe('Eski araç sonuçlarının kısaltılması', () => {
+  const buyuk = (harf) => harf.repeat(50_000);
+  const cagri = (id) => ({ id, ad: 'sekmeyi_oku', girdi: {} });
+
+  /** Her sağlayıcıda 6 tur sonuç ekler; kalan metinleri döner. */
+  function doldur(saglayici) {
+    const { i } = istemci(saglayici, '', []);
+    i.kullaniciEkle('b', 'm');
+    for (const h of 'abcdef') i.sonuclariEkle([{ cagri: cagri(`c${h}`), metin: buyuk(h) }]);
+    return i;
+  }
+
+  for (const saglayici of ['anthropic', 'openai', 'deepseek', 'gemini']) {
+    it(`${saglayici}: sınır aşılınca en eskiler kısaltılır, son tur korunur`, () => {
+      const i = doldur(saglayici);
+      assert.equal(i.aracSonuclari().length, 6);
+      // 300 bin > 200 bin: toplam 80 bine inene kadar eskiden yeniye.
+      assert.equal(i.eskiSonuclariKisalt({ sonKorunan: 1 }), 5);
+      const uzunluklar = i.aracSonuclari().map((s) => s.uzunluk);
+      assert.equal(uzunluklar.at(-1), 50_000);
+      assert.ok(uzunluklar.slice(0, 5).every((u) => u < 200));
+      // Biçim bozulmadı: araç kimlikleri yerinde, istek gövdesi JSON'a çevrilebilir.
+      assert.ok(JSON.stringify(i.gecmis).includes('ce'));
+      assert.match(JSON.stringify(i.gecmis), /yer açmak amacıyla kaldırıldı/);
+      // Sınırın altındayken hiçbir şey yapmaz.
+      assert.equal(i.eskiSonuclariKisalt({ sonKorunan: 1 }), 0);
+    });
+  }
+
+  it('alt sınıra inince durur; son korunanlara dokunmaz', () => {
+    const i = doldur('anthropic');
+    // 300 bin → iki kısaltmada ~200,2 bin (notlar dahil) ≤ 210 bin.
+    assert.equal(i.eskiSonuclariKisalt({ ust: 100_000, alt: 210_000, sonKorunan: 0 }), 2);
+    assert.equal(i.eskiSonuclariKisalt({ ust: 0, alt: 0, sonKorunan: 6 }), 0);
+  });
+});

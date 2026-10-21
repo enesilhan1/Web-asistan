@@ -1,4 +1,4 @@
-import { GecmisliIstemci, YanitSonu, YzHatasi, argumanlariCoz, sayi } from './ortak.js';
+import { GecmisliIstemci, YanitSonu, YzHatasi, argumanlariCoz, metinAlani, sayi } from './ortak.js';
 
 /**
  * Google Gemini API (POST /v1beta/models/{model}:generateContent).
@@ -106,6 +106,17 @@ export class GeminiIstemcisi extends GecmisliIstemci {
               : YanitSonu.BITTI,
       kullanim,
     };
+  }
+
+  aracSonuclari() {
+    return this.gecmis.flatMap((c) =>
+      c.role === 'user'
+        ? (c.parts ?? [])
+            .map((p) => p.functionResponse?.response)
+            .filter(Boolean)
+            .map((r) => metinAlani(r, 'sonuc' in r ? 'sonuc' : 'hata'))
+        : [],
+    );
   }
 
   sonuclariEkle(sonuclar) {

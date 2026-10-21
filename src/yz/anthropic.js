@@ -1,4 +1,4 @@
-import { GecmisliIstemci, YanitSonu, YzHatasi, sayi } from './ortak.js';
+import { GecmisliIstemci, YanitSonu, YzHatasi, metinAlani, sayi } from './ortak.js';
 
 /** Anthropic Messages API (POST /v1/messages). */
 export class AnthropicIstemcisi extends GecmisliIstemci {
@@ -87,6 +87,14 @@ export class AnthropicIstemcisi extends GecmisliIstemci {
         cikti: sayi(u, 'output_tokens'),
       },
     };
+  }
+
+  aracSonuclari() {
+    return this.gecmis.flatMap((m) =>
+      m.role === 'user' && Array.isArray(m.content)
+        ? m.content.filter((b) => b.type === 'tool_result' && typeof b.content === 'string').map((b) => metinAlani(b, 'content'))
+        : [],
+    );
   }
 
   sonuclariEkle(sonuclar) {

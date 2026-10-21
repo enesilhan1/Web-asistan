@@ -63,6 +63,50 @@ export class GecmisliIstemci {
   geriAl() {
     this.gecmis.splice(this._kontrolNoktasi);
   }
+
+  /**
+   * Geçmişteki araç sonucu metinleri, eskiden yeniye. Her biri metnin
+   * uzunluğunu ve onu yer tutucuyla değiştiren fonksiyonu verir.
+   * @returns {{uzunluk: number, kisalt: (yeni: string) => void}[]}
+   */
+  aracSonuclari() {
+    throw new Error('alt sınıf tanımlamalı');
+  }
+
+  /**
+   * Adım sınırı olmadığı için sohbet uzayabilir (docs/SPEC.md §5). Araç
+   * sonuçlarının toplamı [ust] karakteri geçerse en eskilerden başlayarak
+   * yer tutucuyla değiştirir, toplam [alt]'a inene kadar. Son [sonKorunan]
+   * sonuca (az önce eklenen tur) dokunmaz. Kısaltılan sonuç sayısını döner.
+   * Önbelleği her turda bozmamak için arada bir ve topluca yapılır.
+   */
+  eskiSonuclariKisalt({ ust = 200_000, alt = 80_000, sonKorunan = 0 } = {}) {
+    const sonuclar = this.aracSonuclari();
+    let toplam = sonuclar.reduce((t, s) => t + s.uzunluk, 0);
+    if (toplam <= ust) return 0;
+    let sayi = 0;
+    for (const s of sonuclar.slice(0, Math.max(0, sonuclar.length - sonKorunan))) {
+      if (toplam <= alt) break;
+      if (s.uzunluk <= KISALTMA_NOTU.length) continue;
+      toplam -= s.uzunluk - KISALTMA_NOTU.length;
+      s.kisalt(KISALTMA_NOTU);
+      sayi++;
+    }
+    return sayi;
+  }
+}
+
+export const KISALTMA_NOTU =
+  '[Bu eski araç sonucu sohbet uzadığı için yer açmak amacıyla kaldırıldı; gerekirse aracı tekrar çağır.]';
+
+/** Metin alanı için aracSonuclari öğesi. */
+export function metinAlani(nesne, alan) {
+  return {
+    uzunluk: String(nesne[alan] ?? '').length,
+    kisalt: (yeni) => {
+      nesne[alan] = yeni;
+    },
+  };
 }
 
 /**

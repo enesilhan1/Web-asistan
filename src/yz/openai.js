@@ -1,4 +1,4 @@
-import { GecmisliIstemci, YanitSonu, YzHatasi, argumanlariCoz, sayi } from './ortak.js';
+import { GecmisliIstemci, YanitSonu, YzHatasi, argumanlariCoz, metinAlani, sayi } from './ortak.js';
 
 /**
  * OpenAI Responses API (POST /v1/responses). Güncel GPT modelleri araç
@@ -92,6 +92,10 @@ export class OpenAiIstemcisi extends GecmisliIstemci {
         cikti: sayi(u, 'output_tokens'),
       },
     };
+  }
+
+  aracSonuclari() {
+    return this.gecmis.filter((o) => o.type === 'function_call_output').map((o) => metinAlani(o, 'output'));
   }
 
   sonuclariEkle(sonuclar) {

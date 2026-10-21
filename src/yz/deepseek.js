@@ -1,4 +1,4 @@
-import { GecmisliIstemci, YanitSonu, YzHatasi, argumanlariCoz, sayi } from './ortak.js';
+import { GecmisliIstemci, YanitSonu, YzHatasi, argumanlariCoz, metinAlani, sayi } from './ortak.js';
 
 /**
  * DeepSeek API (OpenAI biçimli POST /chat/completions).
@@ -73,6 +73,10 @@ export class DeepSeekIstemcisi extends GecmisliIstemci {
                 : YanitSonu.BITTI,
       kullanim,
     };
+  }
+
+  aracSonuclari() {
+    return this.gecmis.filter((m) => m.role === 'tool').map((m) => metinAlani(m, 'content'));
   }
 
   sonuclariEkle(sonuclar) {

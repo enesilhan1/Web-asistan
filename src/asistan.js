@@ -203,6 +203,8 @@ export class Asistan {
         }
         if (sinyal.aborted) throw new YzHatasi('hata.durduruldu');
         istemci.sonuclariEkle(sonuclar);
+        // Adım sınırı olmadığından sohbet modelin sınırını aşmasın (§5).
+        istemci.eskiSonuclariKisalt({ sonKorunan: sonuclar.length });
         await this._kaydet(sohbet);
       }
     } catch (e) {
