@@ -42,8 +42,16 @@ function sahteTarayici({ sekmeler = [], gecmis = [], metinler = {}, odak = 1 } =
 const cagir = (ad, girdi, tarayici) => aracCalistir({ id: '1', ad, girdi }, tarayici);
 
 describe('Araç tanımları', () => {
-  it('üç salt-okur araç', () => {
-    assert.deepEqual(ARACLAR.map((a) => a.ad), ['sekmeleri_listele', 'sekmeyi_oku', 'gecmiste_ara']);
+  it('araç listesi', () => {
+    assert.deepEqual(ARACLAR.map((a) => a.ad), [
+      'sekmeleri_listele',
+      'sekmeyi_oku',
+      'sayfayi_ac',
+      'sayfayi_genisleterek_oku',
+      'github_repo_agaci',
+      'github_dosya_oku',
+      'gecmiste_ara',
+    ]);
     for (const a of ARACLAR) assert.equal(a.sema.type, 'object');
   });
 
@@ -95,7 +103,7 @@ describe('sekmeyi_oku', () => {
     const uzun = 'a'.repeat(PARCA_UZUNLUGU) + 'b'.repeat(10);
     const t = sahteTarayici({ sekmeler: [{ id: 5, url: 'https://a.com/' }], metinler: { 5: sayfa(uzun) } });
     const ilk = await cagir('sekmeyi_oku', { sekme_id: 5 }, t);
-    assert.match(ilk.metin, new RegExp(`Devamı için baslangic=${PARCA_UZUNLUGU} ile tekrar çağır`));
+    assert.match(ilk.metin, new RegExp(`Devamı için aynı aracı baslangic=${PARCA_UZUNLUGU} ile tekrar çağır`));
     assert.ok(!ilk.metin.includes('b'.repeat(10)));
 
     const ikinci = await cagir('sekmeyi_oku', { sekme_id: 5, baslangic: PARCA_UZUNLUGU }, t);
@@ -104,6 +112,26 @@ describe('sekmeyi_oku', () => {
 
     const fazla = await cagir('sekmeyi_oku', { sekme_id: 5, baslangic: 99999 }, t);
     assert.equal(fazla.hata, true);
+  });
+
+  it('bağlantılar ilk parçada, tekrarsız ve çapasız listelenir', async () => {
+    const baglantilar = [
+      { metin: 'Hakkında', url: 'https://a.com/hakkinda' },
+      { metin: 'Hakkında (tekrar)', url: 'https://a.com/hakkinda#ust' },
+      { metin: 'Bu sayfa', url: 'https://a.com/#bolum' },
+      { metin: 'Posta', url: 'mailto:x@a.com' },
+      { metin: '', url: 'https://b.org/x' },
+    ];
+    const uzun = 'a'.repeat(PARCA_UZUNLUGU + 5);
+    const t = sahteTarayici({ sekmeler: [{ id: 5, url: 'https://a.com/' }], metinler: { 5: sayfa(uzun, { baglantilar }) } });
+    const ilk = await cagir('sekmeyi_oku', { sekme_id: 5 }, t);
+    assert.ok(
+      ilk.metin.endsWith(
+        '--- BAĞLANTILAR (2; veri) ---\n[Hakkında] https://a.com/hakkinda\n[(metinsiz)] https://b.org/x\n--- BAĞLANTILAR SONU ---',
+      ),
+    );
+    const ikinci = await cagir('sekmeyi_oku', { sekme_id: 5, baslangic: PARCA_UZUNLUGU }, t);
+    assert.ok(!ikinci.metin.includes('BAĞLANTILAR'));
   });
 
   it('geçersiz girdi, olmayan, okunamaz, uykudaki sekme ve Chrome hatası', async () => {
@@ -152,6 +180,10 @@ describe('sayfaMetni (sayfa içinde çalışan kısım)', () => {
       documentElement: { lang: 'tr' },
       body: { innerText: '  Başlık \r\n\n\n\n Paragraf\t\tbir  \n' },
       querySelector: () => ({ getAttribute: () => ' Kısa   açıklama ' }),
+      links: [
+        { innerText: ' Ana sayfa ', href: 'https://a.com/' },
+        { innerText: '', getAttribute: () => 'Ara', title: '', href: 'https://a.com/ara' },
+      ],
     };
     globalThis.location = { href: 'https://a.com/' };
     globalThis.getSelection = () => ({ toString: () => 'seçili  metin' });
@@ -163,6 +195,10 @@ describe('sayfaMetni (sayfa içinde çalışan kısım)', () => {
         aciklama: 'Kısa açıklama',
         secim: 'seçili metin',
         metin: 'Başlık\n\nParagraf bir',
+        baglantilar: [
+          { metin: 'Ana sayfa', url: 'https://a.com/' },
+          { metin: 'Ara', url: 'https://a.com/ara' },
+        ],
       });
     } finally {
       Object.assign(globalThis, eski);

@@ -98,7 +98,8 @@ describe('Asistan', () => {
     const ilk = k.fetch.istekler[0].govde;
     assert.match(ilk.messages[0].content[0].text, /Etkin sekme: sekme_id=7 \| Haber \| https:\/\/haber.com\//);
     assert.equal(ilk.system, sistemIstemi('tr'));
-    assert.deepEqual(ilk.tools.map((t) => t.name), ['sekmeleri_listele', 'sekmeyi_oku', 'gecmiste_ara']);
+    assert.equal(ilk.tools.length, 7);
+    assert.ok(ilk.tools.some((t) => t.name === 'sayfayi_ac'));
     // Araç sonucu sayfa metnini içermeli.
     const sonuc = k.fetch.istekler[1].govde.messages[2].content[0];
     assert.equal(sonuc.tool_use_id, 't1');
