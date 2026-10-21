@@ -90,7 +90,63 @@ export function baglantilariSadelestir(ham, sayfaUrl) {
   return sonuc;
 }
 
-const BLOK = 'address|article|aside|blockquote|dd|div|dl|dt|fieldset|figcaption|figure|footer|form|header|hr|main|nav|ol|p|pre|section|table|tbody|thead|tfoot|tr|ul|summary|details';
+// Gizli bölümler: metinde işaretlenir ki model kullanıcının görmediği metni
+// (gizli talimat olabilir) ayırt edebilsin. Akordeon içerikleri de gizli
+// olabildiği için atılmaz, yalnızca işaretlenir.
+const GIZLI_BAS = '\u0001';
+const GIZLI_SON = '\u0002';
+export const GIZLI_ISARETI = '⟦GİZLİ METİN — sayfada görünmüyordu⟧';
+export const GIZLI_SONU = '⟦GİZLİ METİN SONU⟧';
+
+const BOS_ETIKETLER = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
+]);
+
+function gizliEtiketMi(etiket) {
+  return (
+    /\shidden(?=[\s=/>])/i.test(etiket) ||
+    /\saria-hidden\s*=\s*["']?true/i.test(etiket) ||
+    /\sstyle\s*=\s*["'][^"']*(display\s*:\s*none|visibility\s*:\s*hidden)/i.test(etiket)
+  );
+}
+
+/**
+ * Gizli öğelerin (hidden, aria-hidden="true", satır içi display:none /
+ * visibility:hidden) içeriğinin başına ve sonuna işaret karakteri koyar.
+ * İç içe gizli öğeler tek bölge sayılır; kapanmayan etiketler, üstlerindeki
+ * etiket kapanınca kapanmış sayılır (tarayıcıdaki gibi).
+ */
+export function gizliBolumleriIsaretle(h) {
+  const yigin = [];
+  let derinlik = 0;
+  const sonuc = h.replace(/<\/?([a-zA-Z][\w-]*)\b[^>]*>/g, (etiket, ham) => {
+    const ad = ham.toLowerCase();
+    if (etiket[1] === '/') {
+      const i = yigin.map((e) => e.ad).lastIndexOf(ad);
+      if (i === -1) return etiket;
+      const kapanan = yigin.splice(i).filter((e) => e.gizli).length;
+      if (!kapanan) return etiket;
+      derinlik -= kapanan;
+      return derinlik === 0 ? etiket + GIZLI_SON : etiket;
+    }
+    if (BOS_ETIKETLER.has(ad) || etiket.endsWith('/>')) return etiket;
+    const gizli = gizliEtiketMi(etiket);
+    yigin.push({ ad, gizli });
+    if (!gizli) return etiket;
+    derinlik++;
+    return derinlik === 1 ? GIZLI_BAS + etiket : etiket;
+  });
+  return derinlik > 0 ? sonuc + GIZLI_SON : sonuc;
+}
+
+/** İşaret karakterlerini okunur işaretlere çevirir; boş gizli bölgeleri atar. */
+function gizliIsaretleriniYaz(t) {
+  return t
+    .replace(/\u0001([^\u0001\u0002]*)\u0002/g, (_, ic) => (ic.trim() ? `\n${GIZLI_ISARETI}\n${ic}\n${GIZLI_SONU}\n` : ' '))
+    .replace(/[\u0001\u0002]/g, '');
+}
+
+const BLOK ='address|article|aside|blockquote|dd|div|dl|dt|fieldset|figcaption|figure|footer|form|header|hr|main|nav|ol|p|pre|section|table|tbody|thead|tfoot|tr|ul|summary|details';
 
 /**
  * @param {string} html
@@ -113,16 +169,19 @@ export function htmldenMetin(html, url) {
     .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/<(script|style|noscript|template|svg|canvas|iframe|object|head)\b[\s\S]*?<\/\1\s*>/gi, ' ')
     .replace(/<(input|select|textarea|button)\b[^>]*\btype\s*=\s*["']?hidden[^>]*>/gi, ' ');
+  h = gizliBolumleriIsaretle(h);
 
   // Bağlantılar: metinde [metin] olarak kalır, adresleri ayrıca toplanır.
   const baglantilar = [];
   h = h.replace(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi, (_, nitelikler, ic) => {
-    const icMetin = tekSatir(varliklariCoz(ic.replace(/<[^>]+>/g, ' ')));
+    // Bağlantının içine düşen gizli bölge işaretleri metinde korunur.
+    const isaretler = (ic.match(/[\u0001\u0002]/g) ?? []).join('');
+    const icMetin = tekSatir(varliklariCoz(ic.replace(/[\u0001\u0002]/g, '').replace(/<[^>]+>/g, ' ')));
     const href = nitelik(` ${nitelikler}`, 'href');
     const mutlak = href ? mutlakAdres(href, taban) : null;
     const gorunen = icMetin || nitelik(` ${nitelikler}`, 'aria-label') || nitelik(` ${nitelikler}`, 'title') || '';
     if (mutlak) baglantilar.push({ metin: gorunen, url: mutlak });
-    return ` ${gorunen} `;
+    return ` ${gorunen} ${isaretler}`;
   });
 
   h = h
@@ -143,7 +202,7 @@ export function htmldenMetin(html, url) {
     url,
     dil,
     aciklama,
-    metin: temizle(varliklariCoz(h)),
+    metin: temizle(gizliIsaretleriniYaz(varliklariCoz(h))),
     baglantilar: baglantilariSadelestir(baglantilar, url),
   };
 }
