@@ -1,6 +1,8 @@
 {
-  "eklentiAdi": { "message": "Web Assistant" },
+  "eklentiAdi": {
+    "message": "Web Assistant"
+  },
   "eklentiAciklamasi": {
-    "message": "AI assistant that reviews your open tabs and knows the sites you visited (domain and title only)."
+    "message": "AI assistant that reviews your tabs, browses sites, reads GitHub repos, and knows your history by domain and title only."
   }
 }

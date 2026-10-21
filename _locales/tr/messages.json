@@ -1,6 +1,8 @@
 {
-  "eklentiAdi": { "message": "Web Asistanı" },
+  "eklentiAdi": {
+    "message": "Web Asistanı"
+  },
   "eklentiAciklamasi": {
-    "message": "Açık sekmeleri inceleyen ve geçmişte girdiğin siteleri (sadece alan adı ve başlık) bilen yapay zekâ asistanı."
+    "message": "Sekmeleri inceleyen, sitelerde gezinen, GitHub repolarını okuyan; geçmişi yalnızca alan adı ve başlıkla bilen yapay zekâ asistanı."
   }
 }

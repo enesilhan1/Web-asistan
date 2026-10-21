@@ -1,13 +1,28 @@
 # Web Asistanı
 
-Açık sekmelerini inceleyen ve geçmişte girdiğin siteleri **yalnızca alan adı ve
-sayfa başlığıyla** bilen bir yapay zekâ asistanı. **Chrome** (ve Edge, Brave,
+Açık sekmelerini inceleyen, bağlantıları takip ederek sitelerde gezinen,
+GitHub repolarını dosya dosya inceleyebilen ve geçmişte girdiğin siteleri
+**yalnızca alan adı ve sayfa başlığıyla** bilen bir yapay zekâ asistanı. **Chrome** (ve Edge, Brave,
 Opera, Vivaldi gibi Chromium tabanlı tarayıcılar) ile **Firefox**'ta aynı kodla
 çalışan bir tarayıcı eklentisi.
 
-- **Açık sekmeler:** bütün açık sekmelerin metnini okuyabilir; özetler,
-  karşılaştırır, sorularını yanıtlar. **Sadece okur**: tıklamaz, form
-  doldurmaz, sayfa açıp kapatmaz.
+- **Açık sekmeler:** bütün açık sekmelerin metnini ve bağlantılarını okur;
+  özetler, karşılaştırır, sorularını yanıtlar.
+- **Gezinme:** bir şeyi detaylı açıklatmak istediğinde sayfaları tek tek
+  açmana gerek yok; asistan bağlantıları takip ederek sitenin içinde ve başka
+  sitelerde kendi gezer. Sayfayı önce arka planda indirir; içerik JavaScript
+  ile yükleniyorsa arka planda bir sekmede açar, okur ve kapatır.
+- **Kapalı bölümler:** "Daha fazla göster", akordeon, açılır bölümler gibi
+  yerleri sayfanın arka planda açılan bir **kopyasında** açıp okur; senin
+  sekmene dokunmaz.
+- **GitHub:** bir repoyu README ile sınırlı kalmadan dosya ağacından başlayıp
+  kaynak dosyalarını okuyarak inceler.
+- **Onay:** baktığın sitede serbestçe gezer; başka bir siteye gitmeden önce
+  bir kez izin ister. Verdiğin izin o sohbet boyunca geçerlidir, yeni sohbette
+  sıfırlanır.
+- **Yapmadıkları:** form doldurmaz, bir şey göndermez, satın almaz, giriş
+  yapmaz; riskli düğmelere ("sil", "satın al", "gönder", "takip et"...) hiç
+  basmaz.
 - **Geçmiş:** tüm tarayıcı geçmişinde arama yapabilir, ama yapay zekâya
   yalnızca alan adı ve başlık gider. Tam adres, tarih ve ziyaret sayısı
   gitmez.
@@ -73,7 +88,7 @@ Yükleme sırasında istenen izinler:
 
 | İzin | Neden |
 | --- | --- |
-| Tüm sitelerdeki verileri okuma | Açık sekmelerin metnini okumak ve yapay zekâ sağlayıcısına bağlanmak için (sadece sen sorduğunda, sadece okuma) |
+| Tüm sitelerdeki verileri okuma | Açık sekmelerin metnini okumak, asistanın gezindiği sayfaları açmak ve yapay zekâ sağlayıcısına / GitHub'a bağlanmak için (sadece sen sorduğunda) |
 | Tarama geçmişini okuma | Geçmişte arama için (modele yalnızca alan adı + başlık gider) |
 | Sekmeler | Açık sekmeleri listelemek için |
 | Depolama | Ayarları ve sohbetleri bu bilgisayarda saklamak için |
@@ -94,10 +109,35 @@ ayrıdır.
 Eklenti simgesine tıkla → ⚙ **Ayarlar** → sağlayıcıyı seç → anahtarı yapıştır →
 **Kaydet**.
 
+### GitHub token'ı (isteğe bağlı)
+
+Asistan GitHub repolarını GitHub API'siyle inceler. Anahtarsız sınır **saatte
+60 istek**; büyük bir repoyu incelerken buna takılabilirsin. Ayarlar'daki
+**GitHub token** alanına bir token girersen sınır yükselir ve özel repoların da
+okunabilir.
+
+1. [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new)
+   adresinde **fine-grained** bir token oluştur.
+2. **Repository access** bölümünde istediğin repoları seç; **Permissions** →
+   **Contents: Read-only** yeterli (yalnızca herkese açık repolar için hiçbir
+   izin vermeden de oluşturabilirsin).
+3. Token'ı Ayarlar'daki alana yapıştırıp **Kaydet**. Token yalnızca GitHub'a
+   gönderilir.
+
 ## Kullanım
 
 - Simgeye tıkla, sorunu yaz: "Bu sayfayı özetle", "Açık sekmelerimdeki
-  ürünleri karşılaştır", "Geçmişimde hangi tarif sitelerine girmişim?".
+  ürünleri karşılaştır", "Bu reponun mimarisini detaylıca açıkla", "Bu
+  sitenin fiyatlandırma ve SSS sayfalarına bakıp özetle", "Geçmişimde hangi
+  tarif sitelerine girmişim?".
+- Asistan başka bir siteye gitmek istediğinde sohbette bir **onay kartı**
+  çıkar (gideceği tam adresle); popup kapalıysa eklenti simgesinde **?**
+  işareti görünür. **İzin ver** dersen o sohbet boyunca o sitede sormadan
+  gezer.
+- Bir mesaj için adım sınırı yok: asistan işi bitene kadar gerekli sayfaları
+  açar. Uzun incelemeler daha fazla API kullanımı demektir; istediğin an ■
+  ile durdurabilirsin. Sohbet çok uzarsa en eski sayfa içerikleri yer açmak
+  için kısaltılır (gerekirse asistan sayfayı yeniden açar).
 - Popup'ı kapatsan da yanıt arka planda hazırlanmaya devam eder; tekrar
   açınca görürsün. ■ düğmesi yanıtı durdurur.
 - ☰ eski sohbetler, ＋ yeni sohbet. Bir sohbet başladığı modelle devam eder;
@@ -124,12 +164,21 @@ erişime izin ver**'i aç.
 - API anahtarların ve sohbetlerin yalnızca bu bilgisayarda
   (`storage.local`) durur; şifrelenmeden saklanır, bilgisayarı
   paylaşıyorsan dikkat et.
-- Asistan bir sayfayı okuduğunda ya da geçmişte aradığında, sonuç **yalnızca
-  seçtiğin sağlayıcıya** gönderilir. Başka hiçbir sunucuya veri gitmez.
+- Asistanın okuduğu sayfa metinleri ve geçmiş aramaları **yalnızca seçtiğin
+  yapay zekâ sağlayıcısına** gönderilir. GitHub token'ı yalnızca GitHub'a
+  gider.
+- Asistan bir sayfa açtığında o siteye **senin tarayıcın üzerinden**
+  (oturumunla) gider; böylece giriş yaptığın sayfaları da okuyabilir. Bu
+  yüzden baktığın site dışındaki her site için önce **onay** ister ve
+  gideceği tam adresi gösterir.
 - Asistana sayfa metinlerinin **veri** olduğu, içlerindeki talimatlara
-  uymaması söylenir (bir sayfa "önceki talimatları unut" gibi bir şey yazsa
-  bile). Asistan zaten yalnızca okuyabildiği için sayfalarda bir şey
-  yapamaz.
+  uymaması söylenir (bir sayfa "önceki talimatları unut" ya da "şu adrese
+  git" yazsa bile). Ayrıca senin bilgilerini ve diğer sekmelerden
+  öğrendiklerini hiçbir adrese koymaması söylenir; başka bir siteye gitmek
+  ise her zaman senin onayına bağlıdır.
+- Bölüm açarken form içindeki öğelere, başka sayfaya giden bağlantılara ve
+  riskli düğmelere hiç tıklanmaz; bu işlem senin sekmende değil, arka planda
+  açılıp kapatılan bir kopyada yapılır.
 
 ## Geliştirme
 
@@ -139,10 +188,15 @@ Chrome'da service worker, Firefox'ta arka plan betiği olarak yüklenir
 
 ```
 src/
-  arka_plan.js       arka plan: popup'tan gelen gönder/durdur
+  arka_plan.js       arka plan: popup'tan gelen gönder/durdur/onay
   tarayici.js        Chrome/Firefox ortak API, site erişim izni
-  asistan.js         sohbet döngüsü (model ↔ araçlar), kayıt
-  araclar/araclar.js sekmeleri_listele, sekmeyi_oku, gecmiste_ara
+  asistan.js         sohbet döngüsü (model ↔ araçlar), site onayı, kayıt
+  araclar/
+    araclar.js       araç tanımları; sekmeleri_listele, sekmeyi_oku, gecmiste_ara
+    gezinme.js       sayfayi_ac, sayfayi_genisleterek_oku, arka plan sekmesi
+    github.js        github_repo_agaci, github_dosya_oku
+    html_metin.js    indirilen HTML → metin + bağlantılar
+    sayfa.js, site.js, kisitli.js
   yz/                sağlayıcı istemcileri (anthropic, openai, gemini, deepseek)
   depo.js, dil.js, sistem.js, markdown.js
 popup/               açılır pencere arayüzü
@@ -164,7 +218,9 @@ python -m http.server 8123
 
 Sonra `http://localhost:8123/test/onizleme.html` adresini aç
 (`?anahtar=0` anahtarsız hal, `?hata=1` API hatası, `?izin=0` site izni
-verilmemiş hal).
+verilmemiş hal, `?senaryo=gezinme` başka siteye gitme ve onay kartı).
+`test/ornek/` altındaki sayfalar gerçek tarayıcıda gezinme ve bölüm açma
+denemesi içindir.
 
 Mağaza / Firefox imzalama paketi:
 

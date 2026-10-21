@@ -9,7 +9,8 @@
     yanıtıyla çalıştırır. Proje kökünden bir HTTP sunucusuyla açılmalı:
       python -m http.server 8123   →   http://localhost:8123/test/onizleme.html
     ?anahtar=0 → API anahtarı girilmemiş hali, ?hata=1 → API hatası,
-    ?izin=0 → site erişim izni verilmemiş hali.
+    ?izin=0 → site erişim izni verilmemiş hali, ?senaryo=gezinme → başka siteye
+    gitme ve site onayı kartı.
   -->
   <style>
     html { background: #888; }
@@ -60,7 +61,14 @@
     history: { search: async () => [] },
   };
   let tur = 0;
-  const sahteFetch = async (_adres, secenek) => {
+  const gezinme = parametre.get('senaryo') === 'gezinme';
+  const sahteFetch = async (adres, secenek = {}) => {
+    // Araçların sayfa indirmeleri (GET): sahte bir rehber sayfası.
+    if (secenek.method !== 'POST') {
+      const html = `<html lang="tr"><head><title>Kurulum rehberi</title></head><body><h1>Kurulum</h1>
+        <p>${'Adım adım kurulum anlatımı. '.repeat(30)}</p><a href="/sss">SSS</a></body></html>`;
+      return new Response(html, { status: 200, headers: { 'content-type': 'text/html' } });
+    }
     // Gerçek fetch gibi durdurulunca hemen iptal olur.
     await new Promise((coz, reddet) => {
       const z = setTimeout(coz, Number(parametre.get('gecikme') ?? 900));
@@ -77,8 +85,12 @@
     const aracSonucu = Array.isArray(sonMesaj.content) && sonMesaj.content[0]?.type === 'tool_result';
     tur++;
     const icerik = aracSonucu
-      ? [{ type: 'text', text: '## Özet\nSayfada iki ana nokta var:\n- **Yeni model** duyuruldu\n- Fiyatlar `düştü`\n\nKaynak: *Örnek Haber* sekmesi.' }]
-      : [{ type: 'tool_use', id: `t${tur}`, name: 'sekmeyi_oku', input: { sekme_id: 11 } }];
+      ? [{ type: 'text', text: gezinme
+          ? 'Rehbere baktım: kurulum **adım adım** anlatılıyor; ayrıca bir SSS sayfası var.'
+          : '## Özet\nSayfada iki ana nokta var:\n- **Yeni model** duyuruldu\n- Fiyatlar `düştü`\n\nKaynak: *Örnek Haber* sekmesi.' }]
+      : gezinme
+        ? [{ type: 'tool_use', id: `t${tur}`, name: 'sayfayi_ac', input: { url: 'https://docs.ornek.org/kurulum/rehber?surum=2' } }]
+        : [{ type: 'tool_use', id: `t${tur}`, name: 'sekmeyi_oku', input: { sekme_id: 11 } }];
     return new Response(JSON.stringify({
       content: icerik,
       stop_reason: aracSonucu ? 'end_turn' : 'tool_use',
@@ -113,6 +125,7 @@
           }
         }
         if (m.tur === 'durdur') asistan.durdur(m.sohbetId);
+        if (m.tur === 'onay') asistan.karar(m.onayId, m.kabul === true);
         return {};
       },
     },
