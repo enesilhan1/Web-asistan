@@ -1,5 +1,7 @@
 # Web Asistanı
 
+[![Testler](https://github.com/enesilhan1/Web-asistan/actions/workflows/test.yml/badge.svg)](https://github.com/enesilhan1/Web-asistan/actions/workflows/test.yml)
+
 Açık sekmelerini inceleyen, bağlantıları takip ederek sitelerde gezinen,
 GitHub repolarını dosya dosya inceleyebilen ve geçmişte girdiğin siteleri
 **yalnızca alan adı ve sayfa başlığıyla** bilen bir yapay zekâ asistanı. **Chrome** (ve Edge, Brave,
