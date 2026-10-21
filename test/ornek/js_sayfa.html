@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="tr">
+<head><meta charset="utf-8"><title>JS ile yüklenen sayfa</title></head>
+<body>
+<!-- Gerçek tarayıcı denemesi: içerik HTML'de yok, JavaScript ile eklenir.
+     Arka planda indirilince boş görünmeli, asistan sekmeye geçmeli. -->
+<div id="kok"></div>
+<noscript>You need to enable JavaScript to run this app.</noscript>
+<script>
+  setTimeout(() => {
+    const p = document.createElement('p');
+    p.textContent = 'JS_ICERIGI: Bu paragraf JavaScript ile eklendi. ' + 'Ek içerik. '.repeat(60);
+    document.getElementById('kok').append(p);
+  }, 300);
+</script>
+</body>
+</html>

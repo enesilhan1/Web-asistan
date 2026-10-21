@@ -90,7 +90,7 @@ export async function sayfayiAc(girdi, ortam) {
       return sayfaCiktisi(sonuc.sayfa, baslangic, { devamIpucu: 'sayfayi_ac aracını aynı url ve' });
     }
     not = sonuc.sayfa
-      ? 'Arka planda indirilen içerik eksik görünüyordu (JavaScript ile yükleniyor); sayfa arka plan sekmesinde açılıp okundu.'
+      ? 'Arka planda indirilen içerik çok kısaydı ya da JavaScript ile yükleniyor görünüyordu; sayfa arka plan sekmesinde açılıp okundu.'
       : `Sayfa arka planda indirilemedi (${sonuc.neden}); arka plan sekmesinde açılıp okundu.`;
   }
 
@@ -186,8 +186,11 @@ async function yuklenmesiniBekle(ortam, id) {
     } catch {
       throw new AracHatasi('Arka plan sekmesi beklenmedik şekilde kapandı.');
     }
+    // Firefox yeni sekmeyi gezinme başlamadan bir an "complete" + about:blank
+    // olarak bildiriyor; gerçek adrese geçmeden yüklendi sayılmaz.
+    const yuklendi = s.status === 'complete' && s.url && s.url !== 'about:blank';
     // Zaman aşımında da devam edilir: yavaş sitelerin çoğu bu sürede okunabilir hale gelir.
-    if (s.status === 'complete' || Date.now() > bitis) return s;
+    if (yuklendi || Date.now() > bitis) return s;
     await bekle(sure(ortam, 250), ortam.sinyal);
   }
 }

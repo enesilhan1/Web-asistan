@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="tr">
+<head><meta charset="utf-8"><title>Akordeonlu ürün sayfası</title></head>
+<body>
+<!-- Gerçek tarayıcı denemesi: bölümlerin içeriği tıklanınca JavaScript ile
+     eklenir (HTML'de yok). Riskli düğmelere ve forma tıklanmamalı. -->
+<h1>Ürün</h1>
+<p>Kısa açıklama.</p>
+<button id="ozellik" aria-expanded="false">Teknik özellikler</button>
+<div id="ozellik-icerik"></div>
+<button id="daha">Daha fazla göster</button>
+<div id="daha-icerik"></div>
+<details><summary>Kargo</summary><p>KARGO_BILGISI: 2 gün</p></details>
+<button id="sepet">Sepete ekle</button>
+<form action="/gonder"><button id="formdaki" type="button">Daha fazla</button></form>
+<a href="/baska-sayfa">Tümünü göster</a>
+<script>
+  window.tiklananlar = [];
+  for (const id of ['ozellik', 'daha', 'sepet', 'formdaki']) {
+    document.getElementById(id).addEventListener('click', (e) => {
+      window.tiklananlar.push(id);
+      document.title = 'Tıklananlar: ' + window.tiklananlar.join(',');
+      if (id === 'ozellik') {
+        e.target.setAttribute('aria-expanded', 'true');
+        document.getElementById('ozellik-icerik').textContent = 'OZELLIK_ICERIGI: 8 GB RAM';
+      }
+      if (id === 'daha') document.getElementById('daha-icerik').textContent = 'DAHA_ICERIGI: uzun açıklama';
+    });
+  }
+</script>
+</body>
+</html>

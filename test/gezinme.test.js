@@ -149,7 +149,7 @@ describe('sayfayi_ac', () => {
       tarayici,
     });
     assert.equal(s.hata, undefined, s.metin);
-    assert.match(s.metin, /Not: Arka planda indirilen içerik eksik görünüyordu/);
+    assert.match(s.metin, /Not: Arka planda indirilen içerik çok kısaydı ya da JavaScript ile yükleniyor/);
     assert.deepEqual(tarayici.acilan, [{ url: 'https://a.com/app', active: false }]);
     assert.deepEqual(tarayici.kapatilan, [901]);
   });
@@ -208,6 +208,21 @@ describe('sayfayi_ac', () => {
       assert.equal(s.hata, true, url);
       assert.match(s.metin, desen, url);
     }
+  });
+
+  it('Firefox: yeni sekmenin geçici "complete + about:blank" hali yüklendi sayılmaz', async () => {
+    const tarayici = sahteTarayici({ sekmeMetni: { baslik: 'S', url: 'https://a.com/k', metin: 'gerçek' } });
+    let sorgu = 0;
+    tarayici.tabs.get = async (id) => {
+      sorgu++;
+      if (sorgu === 1) return { id, status: 'complete', url: 'about:blank' };
+      if (sorgu === 2) return { id, status: 'loading', url: 'https://a.com/k' };
+      return { id, status: 'complete', url: 'https://a.com/k' };
+    };
+    const s = await calistir('sayfayi_ac', { url: 'https://a.com/k', yontem: 'sekme' }, { tarayici });
+    assert.equal(s.hata, undefined, s.metin);
+    assert.equal(sorgu, 3);
+    assert.match(s.metin, /\ngerçek\n/);
   });
 
   it('sekmede okuma hata verse de sekme kapatılır', async () => {
