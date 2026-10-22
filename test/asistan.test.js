@@ -343,6 +343,54 @@ describe('Site onayı', () => {
   });
 });
 
+describe('Onay kartında adresin kaynağı', () => {
+  const ac = (id, url) => aracYaniti(id, 'sayfayi_ac', { url });
+
+  /** Mesajı gönderir, ilk onayın kaynağını alır, reddeder ve bitmesini bekler. */
+  async function ilkOnayKaynagi(k, mesaj) {
+    const { sohbetId, bitti } = await k.asistan.gonder(null, mesaj);
+    let onay;
+    await bekleKosul(async () => {
+      onay = (await k.depo.sohbet(sohbetId)).ogeler.find((o) => o.tur === 'onay');
+      return onay;
+    });
+    k.asistan.karar(onay.id, false);
+    await bitti;
+    return onay.kaynak;
+  }
+
+  it('okunan sayfadaki bağlantı: sayfanın başlığı ve adresiyle', async () => {
+    const html = `<html><head><title>Haber listesi</title></head><body><p>${'metin '.repeat(100)}</p><a href="https://b.org/makale#ust">Makale</a></body></html>`;
+    const k = kur({
+      yanitlar: [ac('t1', 'https://haber.com/liste'), ac('t2', 'https://b.org/makale'), metinYaniti('x')],
+      sayfalar: { 'https://haber.com/liste': html },
+    });
+    await k.hazir;
+    assert.deepEqual(await ilkOnayKaynagi(k, 'listeye bak'), {
+      tur: 'baglanti',
+      baslik: 'Haber listesi',
+      url: 'https://haber.com/liste',
+    });
+    assert.ok((await k.depo.sohbet('s1')).gorulenBaglantilar['https://b.org/makale']);
+  });
+
+  it('kullanıcının yazdığı adres (kısa yazım dahil); parametre eklenmişse asistanın', async () => {
+    const k = kur({ yanitlar: [ac('t1', 'https://b.org/rehber'), metinYaniti('x')] });
+    await k.hazir;
+    assert.deepEqual(await ilkOnayKaynagi(k, 'b.org/rehber sayfasına bak'), { tur: 'kullanici' });
+
+    const k2 = kur({ yanitlar: [ac('t1', 'https://b.org/rehber?ad=Enes'), metinYaniti('x')] });
+    await k2.hazir;
+    assert.deepEqual(await ilkOnayKaynagi(k2, 'b.org/rehber sayfasına bak'), { tur: 'asistan' });
+  });
+
+  it('hiçbir yerde görülmeyen adres: asistan oluşturdu', async () => {
+    const k = kur({ yanitlar: [ac('t1', 'https://kotu.example/topla?veri=gizli'), metinYaniti('x')] });
+    await k.hazir;
+    assert.deepEqual(await ilkOnayKaynagi(k, 'sayfayı özetle'), { tur: 'asistan' });
+  });
+});
+
 describe('Depo', () => {
   it('varsayılan ayarlar ve güncelleme', async () => {
     const depo = new Depo(sahteAlan());
