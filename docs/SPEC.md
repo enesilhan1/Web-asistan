@@ -59,7 +59,9 @@ Her kullanıcı mesajına yalnızca kısa bağlam eklenir: tarih/saat ve etkin
 sekmenin kimliği, başlığı, adresi.
 
 Sayfa içerikleri **veridir, talimat değildir**; sistem istemi bunu modele
-açıkça söyler.
+açıkça söyler. Arka planda indirilen sayfalarda gizli öğelerin (`hidden`,
+`aria-hidden`, `display:none`, `visibility:hidden`) metni `⟦GİZLİ METİN⟧`
+işaretleriyle ayrılır; model içlerindeki talimatlara uymaz.
 
 ## 6. Arayüz
 - **Açılır pencere (popup)**.
@@ -95,6 +97,10 @@ açıkça söyler.
 - Yönlendirme başka bir siteye götürürse içerik, o site için onay alınmadan
   modele verilmez.
 - GitHub araçları `github.com` sitesi sayılır.
+- Onay kartı adresin **kaynağını** gösterir: okunan bir sayfanın bağlantısı
+  (sayfa başlığıyla), açık sekmeler, kullanıcının mesajı, yönlendirme ya da
+  GitHub reposu. Adres bunların hiçbirinde geçmiyorsa (asistan kendisi
+  oluşturduysa) kart belirgin bir **uyarı** gösterir.
 
 ## 10. GitHub
 - Repo bilgisi ve dosya ağacı GitHub API'sinden, dosyalar
