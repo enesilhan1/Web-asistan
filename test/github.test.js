@@ -157,3 +157,14 @@ describe('github_dosya_oku', () => {
     assert.match((await cagir('github_dosya_oku', { depo: 'enes/proje', yol: ' ' }, raw)).metin, /"yol" boş olamaz/);
   });
 });
+
+describe('GitHub onay bağlamı', () => {
+  it('hangi repo için istendiği iletilir', async () => {
+    const istekler = [];
+    await aracCalistir({ id: '1', ad: 'github_dosya_oku', girdi: { depo: 'enes/proje', yol: 'a.js' } }, {}, {
+      fetch: ag({}),
+      siteIzni: async (url, baglam) => (istekler.push({ url, baglam }), false),
+    });
+    assert.deepEqual(istekler, [{ url: 'https://github.com/', baglam: { github: 'enes/proje' } }]);
+  });
+});

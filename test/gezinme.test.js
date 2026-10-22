@@ -375,3 +375,18 @@ describe('baglantiKaydet', () => {
     assert.deepEqual(kayitlar, [{ b: [{ metin: 'A', url: 'https://a.com/' }], k: { baslik: 'Açık sekmeler', url: '' } }]);
   });
 });
+
+describe('onay isteğinin bağlamı', () => {
+  it('yönlendirmede hangi adresten gelindiği iletilir', async () => {
+    const istekler = [];
+    const fetch = sahteAg({ 'https://a.com/git': { son: 'https://b.net/hedef', govde: uzunHtml(icerik) } });
+    await aracCalistir({ id: '1', ad: 'sayfayi_ac', girdi: { url: 'https://a.com/git' } }, sahteTarayici(), {
+      fetch,
+      siteIzni: async (url, baglam) => (istekler.push({ url, baglam }), true),
+    });
+    assert.deepEqual(istekler, [
+      { url: 'https://a.com/git', baglam: {} },
+      { url: 'https://b.net/hedef', baglam: { yonlendiren: 'https://a.com/git' } },
+    ]);
+  });
+});
