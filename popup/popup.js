@@ -309,6 +309,7 @@ function onayCiz(o) {
     return d;
   }
   baslik.textContent = t('ui.onay.soru', { site: o.site });
+  const kaynak = kaynakCiz(o.kaynak);
   const aciklama = document.createElement('div');
   aciklama.className = 'onay-aciklama';
   aciklama.textContent = t('ui.onay.aciklama', { site: o.site });
@@ -325,7 +326,26 @@ function onayCiz(o) {
     });
     dugmeler.append(b);
   }
-  d.append(baslik, adres, aciklama, dugmeler);
+  d.append(baslik, adres, ...(kaynak ? [kaynak] : []), aciklama, dugmeler);
+  if (o.kaynak?.tur === 'asistan') d.classList.add('uyarili');
+  return d;
+}
+
+/** Onay kartında adresin nereden geldiği; eski sohbetlerde bilgi yoksa null. */
+function kaynakCiz(k) {
+  if (!k) return null;
+  const d = document.createElement('div');
+  d.className = k.tur === 'asistan' ? 'onay-kaynak onay-uyari' : 'onay-kaynak';
+  if (k.tur === 'baglanti') {
+    d.textContent = k.url
+      ? t('ui.onay.kaynak.baglanti', { baslik: k.baslik || kisaAdres(k.url) })
+      : t('ui.onay.kaynak.sekme');
+    if (k.url) d.title = k.url;
+  } else if (k.tur === 'yonlendirme') {
+    d.textContent = t('ui.onay.kaynak.yonlendirme', { adres: kisaAdres(k.url) });
+  } else {
+    d.textContent = t(`ui.onay.kaynak.${k.tur}`, { depo: k.depo });
+  }
   return d;
 }
 

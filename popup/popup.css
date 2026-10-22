@@ -205,6 +205,15 @@ svg {
   overflow: hidden;
 }
 .onay-aciklama { font-size: 12px; color: var(--soluk); }
+.onay-kaynak { font-size: 12px; }
+.onay-uyari {
+  color: var(--hata);
+  background: var(--hata-zemin);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-weight: 600;
+}
+.onay.uyarili { border-left-color: var(--hata); }
 .onay-dugmeleri { display: flex; justify-content: flex-end; gap: 8px; }
 .onay-dugmeleri .ikincil { padding: 5px 12px; }
 .onay-dugmeleri button:disabled { opacity: .5; cursor: default; }
