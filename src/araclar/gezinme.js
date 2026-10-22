@@ -87,7 +87,10 @@ export async function sayfayiAc(girdi, ortam) {
   if (yontem === 'otomatik') {
     const sonuc = await indir(url, ortam);
     if (sonuc.sayfa && !(sonuc.html && eksikGorunuyor(sonuc.sayfa))) {
-      return sayfaCiktisi(sonuc.sayfa, baslangic, { devamIpucu: 'sayfayi_ac aracını aynı url ve' });
+      return sayfaCiktisi(sonuc.sayfa, baslangic, {
+        devamIpucu: 'sayfayi_ac aracını aynı url ve',
+        baglantiKaydet: ortam.baglantiKaydet,
+      });
     }
     not = sonuc.sayfa
       ? 'Arka planda indirilen içerik çok kısaydı ya da JavaScript ile yükleniyor görünüyordu; sayfa arka plan sekmesinde açılıp okundu.'
@@ -98,6 +101,7 @@ export async function sayfayiAc(girdi, ortam) {
   return sayfaCiktisi(sayfa, baslangic, {
     not,
     devamIpucu: 'sayfayi_ac aracını aynı url, yontem="sekme" ve',
+    baglantiKaydet: ortam.baglantiKaydet,
   });
 }
 
@@ -252,6 +256,7 @@ export async function genisleterekOku(girdi, ortam) {
   return sayfaCiktisi(sayfa, baslangic, {
     not,
     devamIpucu: 'sayfayi_genisleterek_oku aracını aynı girdilerle ve',
+    baglantiKaydet: ortam.baglantiKaydet,
   });
 }
 

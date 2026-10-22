@@ -159,9 +159,9 @@ export async function aracCalistir(cagri, tarayici, ek = {}) {
   try {
     switch (cagri.ad) {
       case 'sekmeleri_listele':
-        return { cagri, metin: await sekmeleriListele(tarayici) };
+        return { cagri, metin: await sekmeleriListele(tarayici, ortam.baglantiKaydet) };
       case 'sekmeyi_oku':
-        return { cagri, metin: await sekmeyiOku(tarayici, cagri.girdi) };
+        return { cagri, metin: await sekmeyiOku(tarayici, cagri.girdi, ortam.baglantiKaydet) };
       case 'sayfayi_ac':
         return { cagri, metin: await sayfayiAc(cagri.girdi, ortam) };
       case 'sayfayi_genisleterek_oku':
@@ -180,12 +180,17 @@ export async function aracCalistir(cagri, tarayici, ek = {}) {
   }
 }
 
-async function sekmeleriListele(tarayici) {
+async function sekmeleriListele(tarayici, baglantiKaydet) {
   const sekmeler = await tarayici.tabs.query({});
   if (!sekmeler.length) return 'Açık sekme yok.';
   const odakPencere = await odaktakiPencere(tarayici);
   const pencereNo = new Map();
   for (const s of sekmeler) if (!pencereNo.has(s.windowId)) pencereNo.set(s.windowId, pencereNo.size + 1);
+  // Açık sekmelerin adresleri de onay kartında geçerli kaynak sayılır.
+  baglantiKaydet?.(
+    sekmeler.filter((s) => /^https?:/.test(s.url ?? '')).map((s) => ({ metin: s.title ?? '', url: s.url })),
+    { baslik: 'Açık sekmeler', url: '' },
+  );
 
   return sekmeler
     .map((s) => {
@@ -211,7 +216,7 @@ async function odaktakiPencere(tarayici) {
   }
 }
 
-async function sekmeyiOku(tarayici, girdi) {
+async function sekmeyiOku(tarayici, girdi, baglantiKaydet) {
   const id = girdi?.sekme_id;
   if (!Number.isInteger(id)) throw new AracHatasi('"sekme_id" bir tam sayı olmalı.');
   const baslangic = baslangicAl(girdi);
@@ -260,6 +265,7 @@ async function sekmeyiOku(tarayici, girdi) {
   return sayfaCiktisi(
     { ...sonuc, baslik: sonuc.baslik || sekme.title, url: sonuc.url || sekme.url },
     baslangic,
+    { baglantiKaydet },
   );
 }
 

@@ -49,8 +49,10 @@ export function sayfaMetni() {
  * @param {{baslik?: string, url?: string, dil?: string, aciklama?: string, secim?: string,
  *   metin?: string, baglantilar?: {metin: string, url: string}[]}} sayfa
  * @param {number} baslangic
- * @param {{not?: string, devamIpucu?: string}} [ek]
+ * @param {{not?: string, devamIpucu?: string,
+ *   baglantiKaydet?: (baglantilar: {metin: string, url: string}[], kaynak: {baslik: string, url: string}) => void}} [ek]
  *   devamIpucu: devamını okumak için çağrılacak şey (varsayılan: aynı aracı baslangic ile)
+ *   baglantiKaydet: modele gösterilen bağlantılar bildirilir (onay kartında adresin kaynağı için)
  */
 export function sayfaCiktisi(sayfa, baslangic, ek = {}) {
   const metin = sayfa.metin ?? '';
@@ -82,6 +84,7 @@ export function sayfaCiktisi(sayfa, baslangic, ek = {}) {
   if (baslangic === 0) {
     const baglantilar = baglantilariSadelestir(sayfa.baglantilar ?? [], sayfa.url);
     if (baglantilar.length) {
+      ek.baglantiKaydet?.(baglantilar, { baslik: sayfa.baslik || '', url: sayfa.url });
       satirlar.push(`--- BAĞLANTILAR (${baglantilar.length}; veri) ---`);
       for (const b of baglantilar) satirlar.push(`[${b.metin || '(metinsiz)'}] ${b.url}`);
       satirlar.push('--- BAĞLANTILAR SONU ---');
