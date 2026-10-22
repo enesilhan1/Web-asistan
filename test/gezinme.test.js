@@ -348,3 +348,30 @@ describe('gizli bölüm uyarısı', () => {
     assert.ok(!temiz.metin.includes('Uyarı:'));
   });
 });
+
+describe('baglantiKaydet', () => {
+  it('modele gösterilen bağlantılar kaynak sayfasıyla bildirilir', async () => {
+    const kayitlar = [];
+    const fetch = sahteAg({ 'https://a.com/x': { govde: uzunHtml(icerik) } });
+    await aracCalistir({ id: '1', ad: 'sayfayi_ac', girdi: { url: 'https://a.com/x' } }, sahteTarayici(), {
+      fetch,
+      baglantiKaydet: (b, k) => kayitlar.push({ b, k }),
+    });
+    assert.deepEqual(kayitlar, [{ b: [{ metin: 'Diğer', url: 'https://a.com/diger' }], k: { baslik: 'Sayfa', url: 'https://a.com/x' } }]);
+  });
+
+  it('sekme listesi açık sekmelerin http(s) adreslerini bildirir', async () => {
+    const kayitlar = [];
+    const tarayici = {
+      tabs: {
+        query: async () => [
+          { id: 1, windowId: 1, title: 'A', url: 'https://a.com/' },
+          { id: 2, windowId: 1, title: 'Ayarlar', url: 'chrome://settings' },
+        ],
+      },
+      windows: { getLastFocused: async () => ({ id: 1 }) },
+    };
+    await aracCalistir({ id: '1', ad: 'sekmeleri_listele', girdi: {} }, tarayici, { baglantiKaydet: (b, k) => kayitlar.push({ b, k }) });
+    assert.deepEqual(kayitlar, [{ b: [{ metin: 'A', url: 'https://a.com/' }], k: { baslik: 'Açık sekmeler', url: '' } }]);
+  });
+});
