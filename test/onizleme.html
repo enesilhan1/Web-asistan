@@ -10,7 +10,8 @@
       python -m http.server 8123   →   http://localhost:8123/test/onizleme.html
     ?anahtar=0 → API anahtarı girilmemiş hali, ?hata=1 → API hatası,
     ?izin=0 → site erişim izni verilmemiş hali, ?senaryo=gezinme → başka siteye
-    gitme ve site onayı kartı.
+    gitme (onay kartında uydurulmuş adres uyarısı), ?senaryo=baglanti → açık
+    sekmedeki bağlantıyı açma (onay kartında kaynak).
   -->
   <style>
     html { background: #888; }
@@ -56,12 +57,14 @@
     },
     windows: { getLastFocused: async () => ({ id: 1 }) },
     scripting: {
-      executeScript: async () => [{ result: { baslik: sekmeler[0].title, url: sekmeler[0].url, dil: 'tr', aciklama: '', secim: '', metin: 'Yeni model duyuruldu. Fiyatlar düştü.' } }],
+      executeScript: async () => [{ result: { baslik: sekmeler[0].title, url: sekmeler[0].url, dil: 'tr', aciklama: '', secim: '', metin: 'Yeni model duyuruldu. Fiyatlar düştü.', baglantilar: [{ metin: 'Kurulum rehberi', url: 'https://docs.ornek.org/kurulum/rehber' }] } }],
     },
     history: { search: async () => [] },
   };
   let tur = 0;
   const gezinme = parametre.get('senaryo') === 'gezinme';
+  // Önce açık sekmeyi okur, sonra oradaki bağlantıyı açmak ister (kaynak gösterimi).
+  const baglantiSenaryosu = parametre.get('senaryo') === 'baglanti';
   const sahteFetch = async (adres, secenek = {}) => {
     // Araçların sayfa indirmeleri (GET): sahte bir rehber sayfası.
     if (secenek.method !== 'POST') {
@@ -84,7 +87,13 @@
     const sonMesaj = govde.messages.at(-1);
     const aracSonucu = Array.isArray(sonMesaj.content) && sonMesaj.content[0]?.type === 'tool_result';
     tur++;
-    const icerik = aracSonucu
+    const icerik = baglantiSenaryosu
+      ? tur === 1
+        ? [{ type: 'tool_use', id: 't1', name: 'sekmeyi_oku', input: { sekme_id: 11 } }]
+        : tur === 2
+          ? [{ type: 'tool_use', id: 't2', name: 'sayfayi_ac', input: { url: 'https://docs.ornek.org/kurulum/rehber' } }]
+          : [{ type: 'text', text: 'Sayfadaki rehber bağlantısını açıp okudum.' }]
+      : aracSonucu
       ? [{ type: 'text', text: gezinme
           ? 'Rehbere baktım: kurulum **adım adım** anlatılıyor; ayrıca bir SSS sayfası var.'
           : '## Özet\nSayfada iki ana nokta var:\n- **Yeni model** duyuruldu\n- Fiyatlar `düştü`\n\nKaynak: *Örnek Haber* sekmesi.' }]
@@ -93,7 +102,7 @@
         : [{ type: 'tool_use', id: `t${tur}`, name: 'sekmeyi_oku', input: { sekme_id: 11 } }];
     return new Response(JSON.stringify({
       content: icerik,
-      stop_reason: aracSonucu ? 'end_turn' : 'tool_use',
+      stop_reason: icerik[0].type === 'tool_use' ? 'tool_use' : 'end_turn',
       usage: { input_tokens: 1800, output_tokens: 120 },
     }), { status: 200 });
   };
