@@ -173,6 +173,14 @@ erişime izin ver**'i aç.
   (oturumunla) gider; böylece giriş yaptığın sayfaları da okuyabilir. Bu
   yüzden baktığın site dışındaki her site için önce **onay** ister ve
   gideceği tam adresi gösterir.
+- Onay kartı adresin **nereden geldiğini** de yazar: okunan bir sayfadaki
+  bağlantı (sayfanın adıyla), açık sekmelerin, senin mesajın, bir
+  yönlendirme ya da GitHub reposu. Adres bunların hiçbirinde geçmiyorsa
+  asistan onu kendisi oluşturmuş demektir; kart bunu **kırmızı bir uyarıyla**
+  gösterir. Böyle bir adreste kişisel bilgin görüyorsan izin verme.
+- Arka planda indirilen sayfalarda **gizlenmiş metinler** (kullanıcıya
+  görünmeyen bölümler) asistana "gizli" diye işaretlenerek verilir; içlerindeki
+  talimatlara uymaması söylenir.
 - Asistana sayfa metinlerinin **veri** olduğu, içlerindeki talimatlara
   uymaması söylenir (bir sayfa "önceki talimatları unut" ya da "şu adrese
   git" yazsa bile). Ayrıca senin bilgilerini ve diğer sekmelerden
@@ -220,7 +228,8 @@ python -m http.server 8123
 
 Sonra `http://localhost:8123/test/onizleme.html` adresini aç
 (`?anahtar=0` anahtarsız hal, `?hata=1` API hatası, `?izin=0` site izni
-verilmemiş hal, `?senaryo=gezinme` başka siteye gitme ve onay kartı).
+verilmemiş hal, `?senaryo=gezinme` uydurulmuş adres uyarılı onay kartı,
+`?senaryo=baglanti` sayfadaki bağlantının kaynağını gösteren onay kartı).
 `test/ornek/` altındaki sayfalar gerçek tarayıcıda gezinme ve bölüm açma
 denemesi içindir.
 
