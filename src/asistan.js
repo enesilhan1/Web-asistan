@@ -25,7 +25,7 @@ export const EN_FAZLA_GORULEN = 1500;
  *   {tur: 'asistan', metin}
  *   {tur: 'arac', ad, girdi}                       asistanın kullandığı araç
  *   {tur: 'bilgi', anahtar, parametreler, hata}    dil anahtarlı durum/hata
- *   {tur: 'onay', id, site, url, durum}            site onayı; durum: bekliyor |
+ *   {tur: 'onay', id, site, url, kaynak, durum}    site onayı (kaynak: _kaynakBul); durum: bekliyor |
  *                                                  verildi | reddedildi | iptal
  * Sohbetin izinliSiteler listesi onay verilen siteleri tutar (yeni sohbette boş).
  */
@@ -167,7 +167,7 @@ export class Asistan {
       fetch: this.fetch,
       sinyal,
       githubAnahtari: (ayarlar.githubAnahtari ?? '').trim() || undefined,
-      siteIzni: (url) => this._siteIzni(sohbet, url, sinyal),
+      siteIzni: (url, baglam) => this._siteIzni(sohbet, url, sinyal, baglam),
       baglantiKaydet: (baglantilar, kaynak) => this._baglantilariKaydet(sohbet, baglantilar, kaynak),
     };
 
@@ -244,16 +244,52 @@ export class Asistan {
   }
 
   /**
+   * Gidilecek adres nereden geldi (onay kartında gösterilir):
+   *   {tur: 'yonlendirme', url}   izinli bir adres buraya yönlendirdi
+   *   {tur: 'github', depo}       GitHub aracı bu repo için istedi
+   *   {tur: 'baglanti', baslik, url}  okunan bir sayfanın bağlantısı
+   *   {tur: 'kullanici'}          kullanıcının mesajında yazıyor
+   *   {tur: 'asistan'}            hiçbir yerde görülmedi: asistan kendisi
+   *                               oluşturdu (veri sızdırma girişiminin tipik işareti)
+   */
+  _kaynakBul(sohbet, url, baglam) {
+    if (baglam.yonlendiren) return { tur: 'yonlendirme', url: baglam.yonlendiren };
+    if (baglam.github) return { tur: 'github', depo: baglam.github };
+    const anahtar = adresAnahtari(url);
+    const gorulen = anahtar && sohbet.gorulenBaglantilar?.[anahtar];
+    if (gorulen) return { tur: 'baglanti', baslik: gorulen.baslik, url: gorulen.url };
+
+    const yazilan = sohbet.ogeler
+      .filter((o) => o.tur === 'kullanici')
+      .map((o) => o.metin)
+      .join('\n')
+      .toLowerCase();
+    if (anahtar && yazilan.includes(anahtar.toLowerCase())) return { tur: 'kullanici' };
+    // "github.com/x/y" gibi kısa yazım; sorgu parametresi eklenmişse sayılmaz.
+    const u = new URL(url);
+    const kisa = `${u.host}${u.pathname}`.replace(/^www\./, '').replace(/\/$/, '').toLowerCase();
+    if (!u.search && yazilan.includes(kisa)) return { tur: 'kullanici' };
+    return { tur: 'asistan' };
+  }
+
+  /**
    * Site onayı: sohbette izinliyse hemen evet; değilse popup'ta kullanıcıya
    * sorar ve kararını bekler. Durdurulursa hayır.
    */
-  async _siteIzni(sohbet, url, sinyal) {
+  async _siteIzni(sohbet, url, sinyal, baglam = {}) {
     const site = siteAnahtari(url);
     if (!site) return false;
     if (sohbet.izinliSiteler.includes(site)) return true;
     if (sinyal.aborted) return false;
 
-    const oge = { tur: 'onay', id: this.kimlikUret(), site, url, durum: 'bekliyor' };
+    const oge = {
+      tur: 'onay',
+      id: this.kimlikUret(),
+      site,
+      url,
+      kaynak: this._kaynakBul(sohbet, url, baglam),
+      durum: 'bekliyor',
+    };
     sohbet.ogeler.push(oge);
     await this._kaydet(sohbet);
     this._rozet('?');
