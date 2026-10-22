@@ -8,7 +8,7 @@
 // istenir; onay o sohbet boyunca geçerlidir (§9).
 
 import { ARACLAR, aracCalistir } from './araclar/araclar.js';
-import { siteAnahtari } from './araclar/site.js';
+import { adresAnahtari, siteAnahtari } from './araclar/site.js';
 import { baglamMetni, sistemIstemi } from './sistem.js';
 import { siteIzniVarMi } from './tarayici.js';
 import { istemciOlustur } from './yz/istemciler.js';
@@ -16,6 +16,8 @@ import { maliyet, modelBul, saglayiciBul } from './yz/katalog.js';
 import { YanitSonu, YzHatasi } from './yz/ortak.js';
 
 const BASLIK_UZUNLUGU = 60;
+/** Onay kartında kaynak göstermek için sohbet başına saklanan en fazla bağlantı. */
+export const EN_FAZLA_GORULEN = 1500;
 
 /**
  * Sohbet öğeleri (ekranda gösterilen):
@@ -166,6 +168,7 @@ export class Asistan {
       sinyal,
       githubAnahtari: (ayarlar.githubAnahtari ?? '').trim() || undefined,
       siteIzni: (url) => this._siteIzni(sohbet, url, sinyal),
+      baglantiKaydet: (baglantilar, kaynak) => this._baglantilariKaydet(sohbet, baglantilar, kaynak),
     };
 
     try {
@@ -222,6 +225,22 @@ export class Asistan {
       await this._kaydet(sohbet);
       bitir();
     }
+  }
+
+  /**
+   * Modele gösterilen bağlantıları ve görüldükleri sayfayı saklar (en son
+   * görülenler sona; sınır aşılınca en eskiler atılır).
+   */
+  _baglantilariKaydet(sohbet, baglantilar, kaynak) {
+    const g = (sohbet.gorulenBaglantilar ??= {});
+    for (const b of baglantilar) {
+      const anahtar = adresAnahtari(b.url);
+      if (!anahtar) continue;
+      delete g[anahtar];
+      g[anahtar] = { baslik: kaynak.baslik, url: kaynak.url };
+    }
+    const fazla = Object.keys(g).length - EN_FAZLA_GORULEN;
+    if (fazla > 0) for (const k of Object.keys(g).slice(0, fazla)) delete g[k];
   }
 
   /**

@@ -25,6 +25,18 @@ const IKINCI_DUZEY = new Set([
   'blogspot.com', 'wordpress.com', 'web.app', 'firebaseapp.com', 'workers.dev',
 ]);
 
+/** Adres karşılaştırması için anahtar: çapasız (#...) tam adres; geçersizse null. */
+export function adresAnahtari(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    u.hash = '';
+    return u.href;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Adresin site kimliği; http(s) değilse null.
  * @param {string} url
