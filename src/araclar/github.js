@@ -82,7 +82,7 @@ function boyutYaz(bayt) {
 
 export async function githubRepoAgaci(girdi, ortam) {
   const { sahip, ad } = depoCoz(girdi?.depo);
-  await izinIste(ortam, 'https://github.com/');
+  await izinIste(ortam, 'https://github.com/', { github: `${sahip}/${ad}` });
   const repo = await githubIstegi(ortam, `${API}/repos/${sahip}/${ad}`);
   const dal = String(girdi?.dal ?? '').trim() || repo.default_branch;
   const agac = await githubIstegi(ortam, `${API}/repos/${sahip}/${ad}/git/trees/${encodeURIComponent(dal)}?recursive=1`);
@@ -137,7 +137,7 @@ export async function githubDosyaOku(girdi, ortam) {
   const baslangic = baslangicAl(girdi);
   // HEAD: reponun varsayılan dalı (API isteği harcamadan).
   const dal = String(girdi?.dal ?? '').trim() || 'HEAD';
-  await izinIste(ortam, 'https://github.com/');
+  await izinIste(ortam, 'https://github.com/', { github: `${sahip}/${ad}` });
 
   let metin = await githubIstegi(ortam, `${RAW}/${sahip}/${ad}/${yolKodla(dal)}/${yolKodla(yol)}`, { json: false });
   if (metin.slice(0, 8000).includes('\u0000')) {

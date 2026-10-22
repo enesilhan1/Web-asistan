@@ -20,7 +20,8 @@ const GENISLETME_TURU = 3;
  * @typedef {Object} Ortam
  * @property {any} tarayici                 chrome/browser ya da sahtesi
  * @property {typeof fetch} [fetch]
- * @property {(url: string) => Promise<boolean>} [siteIzni]  site onayı (§9); yoksa hep izinli
+ * @property {(url: string, baglam?: {yonlendiren?: string, github?: string}) => Promise<boolean>} [siteIzni]
+ *   site onayı (§9); yoksa hep izinli. baglam: yönlendirmeyle mi gelindi, hangi repo için
  * @property {AbortSignal} [sinyal]
  * @property {number} [beklemeCarpani]      testlerde beklemeleri kısaltmak için
  */
@@ -60,9 +61,9 @@ function adresAl(ham) {
 }
 
 /** Site onayı; reddedilirse modele açıklayıcı hata. */
-export async function izinIste(ortam, url) {
+export async function izinIste(ortam, url, baglam = {}) {
   if (!ortam.siteIzni) return;
-  if (await ortam.siteIzni(url)) return;
+  if (await ortam.siteIzni(url, baglam)) return;
   throw new AracHatasi(
     `Kullanıcı ${siteAnahtari(url)} sitesine gitmeye izin vermedi. Bu siteye gitme; ` +
       'gerekirse başka bir kaynak kullan ya da kullanıcıya sor.',
@@ -71,7 +72,7 @@ export async function izinIste(ortam, url) {
 
 /** Yönlendirme başka siteye götürdüyse o site için de onay gerekir. */
 async function sonAdresIzni(ortam, istenen, son) {
-  if (son && siteAnahtari(son) !== siteAnahtari(istenen)) await izinIste(ortam, son);
+  if (son && siteAnahtari(son) !== siteAnahtari(istenen)) await izinIste(ortam, son, { yonlendiren: istenen });
 }
 
 // ------------------------------------------------------------- sayfayi_ac
